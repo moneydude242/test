@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "nqYd2DsZ9W4=",
+  "success": true,
+  "projectFilePath": "/workspaces/test/G3MWebBridge/G3MWebBridge.csproj",
+  "expectedPackageFiles": [
+    "/home/codespace/.nuget/packages/magick.net-q8-anycpu/14.16.0/magick.net-q8-anycpu.14.16.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/magick.net.core/14.16.0/magick.net.core.14.16.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.codeanalysis.analyzers/5.3.0/microsoft.codeanalysis.analyzers.5.3.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.codeanalysis.common/5.6.0/microsoft.codeanalysis.common.5.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.codeanalysis.csharp/5.6.0/microsoft.codeanalysis.csharp.5.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.codeanalysis.csharp.scripting/5.6.0/microsoft.codeanalysis.csharp.scripting.5.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.codeanalysis.scripting.common/5.6.0/microsoft.codeanalysis.scripting.common.5.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.dotnet.hotreload.webassembly.browser/10.0.200/microsoft.dotnet.hotreload.webassembly.browser.10.0.200.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.net.illink.tasks/10.0.4/microsoft.net.illink.tasks.10.0.4.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.net.sdk.webassembly.pack/10.0.8/microsoft.net.sdk.webassembly.pack.10.0.8.nupkg.sha512",
+    "/home/codespace/.nuget/packages/sharpziplib/1.4.2/sharpziplib.1.4.2.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.netcore.app.ref/10.0.8/microsoft.netcore.app.ref.10.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}
