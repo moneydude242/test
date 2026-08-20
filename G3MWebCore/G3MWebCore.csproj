@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\G3MTool-Deltamod\G3MToolCLI\Lib\UndertaleModLib\UndertaleModLib.csproj" />
+    <ProjectReference Include="..\G3MTool-Deltamod\G3MToolCLI\Lib\Underanalyzer\Underanalyzer\Underanalyzer.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

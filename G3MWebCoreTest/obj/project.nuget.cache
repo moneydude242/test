@@ -1,0 +1,997 @@
+{
+  "version": 2,
+  "dgSpecHash": "YlPGCoIFT1I=",
+  "success": true,
+  "projectFilePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+  "expectedPackageFiles": [
+    "/home/codespace/.nuget/packages/magick.net-q8-anycpu/14.11.0/magick.net-q8-anycpu.14.11.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/magick.net.core/14.11.0/magick.net.core.14.11.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/sharpziplib/1.4.2/sharpziplib.1.4.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-26qp-ffjh-2x4v",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2hhq-c99x-492r",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2rgj-gx5x-f62w",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-36wm-hprc-mcf5",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-422r-8c97-xcg4",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-44cp-c3ww-9rv5",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-4g75-9r48-jf92",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-4v89-6mgq-6rgc",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-533m-3wf6-c33v",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-5592-p365-24xh",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-56m6-8q75-f2rw",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-5r4x-w6p5-222q",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-5v62-8fq6-cp9m",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-5xg3-585r-9jh5",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-6gxq-f64p-5w6f",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-6jwg-7q3p-5fqm",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-6p22-q7w5-33pg",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-6vxp-gfwf-hcr9",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-76q6-2p6h-xjqr",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-7c7m-fpjw-gwcq",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-7gg8-qqx7-92g5",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-7wff-wpr6-vmhm",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-82mp-vp5c-9pf7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-8793-7xv6-82cf",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-8g53-9m3c-69xg",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-8pj9-6897-74xc",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-8vfj-q2cp-5m5j",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-98cp-rj9f-6v5g",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-99w9-hv66-rfv7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-9r56-3gjq-hqf7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-c4v7-w88g-m6c4",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-cr67-pvmx-2pp2",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-cr6r-hmj8-pr7r",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-cwpj-h54c-xjpx",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-f4qm-vj5j-9xpw",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-f5m7-cqgw-8hm7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-ff5c-8x9r-8qcw",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-fwvm-ggf6-2p4x",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-g22q-f7gc-5jhr",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g5mf-wqq5-vwg6",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-h22j-f9xw-xjjm",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-h36c-3666-h489",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-h58x-r7f7-rh84",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-h5r4-w88w-7ccr",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-h7f2-f9cc-h2gv",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-hwf3-r46v-5ggx",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-j8rh-v2r8-v94x",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-j989-f892-2335",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-jcqp-6r6f-3mfx",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-jfq9-q63x-rc63",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-jqq5-8px3-9m6m",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-jvgr-9ph5-m8v4",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-m596-67p7-69wh",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-mw3m-pqr2-qv7c",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-mx48-2qq3-23hf",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-p93h-f2jc-477j",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-p9rq-q46c-g4x6",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-pcvx-ph33-r5vv",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-pfvh-m9xv-8966",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-pjxj-pchx-4c3m",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-pmpg-6pww-fg6q",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-pwg5-6jfc-crvh",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-px7q-ggqj-hcf2",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-q62c-h75r-2xhc",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-q8h3-jv9v-57qx",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-qh5g-q395-cx4j",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-qhmf-7fc4-8q3h",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-qv2q-c278-pch5",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-qvxh-prvr-85w2",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-r628-69v2-2f9c",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-r83h-crwp-3vm7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-rcr6-g7jc-f57g",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-rvhp-75f6-9jqh",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-v3j6-27vc-7pw2",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-v67w-737x-v2c9",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-vf33-6r7x-66xx",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-vghg-5jrg-2398",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-vhrh-72hq-w8m7",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-w54j-7wpm-crhj",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-x928-4434-crqj",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-x9h5-r9v2-vcww",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Magick.NET-Q8-AnyCPU' 14.11.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-xcjm-wqff-m669",
+      "projectPath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "warningLevel": 1,
+      "filePath": "/workspaces/test/G3MWebCoreTest/G3MWebCoreTest.csproj",
+      "libraryId": "Magick.NET-Q8-AnyCPU",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
