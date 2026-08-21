@@ -1,0 +1,12 @@
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/README.txt
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Underanalyzer/deltarune.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Underanalyzer/template.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Underanalyzer/gamemaker.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Underanalyzer/undertale.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Definitions/deltarune.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Definitions/gamemaker.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/GameSpecificData/Definitions/undertale.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/runtimeconfig.template.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/G3MWebBridge.runtimeconfig.json
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/dotnet.js
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/web.config

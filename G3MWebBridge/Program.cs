@@ -1,18 +1,18 @@
 using System;
 using System.Runtime.InteropServices.JavaScript;
+using UndertaleModLib;
 
-Console.WriteLine("Hello, Browser!");
-
-public partial class MyClass
+public partial class Program
 {
-    [JSExport]
-    internal static string Greeting()
+    public static void Main()
     {
-        var text = $"Hello, World! Greetings from {GetHRef()}";
-        Console.WriteLine(text);
-        return text;
+        Console.WriteLine("G3MWebBridge WASM initialized.");
     }
 
-    [JSImport("window.location.href", "main.js")]
-    internal static partial string GetHRef();
+    [JSExport]
+    public static string GetLibraryInfo()
+    {
+        return typeof(UndertaleData).Assembly.FullName
+            ?? "UndertaleModLib loaded";
+    }
 }

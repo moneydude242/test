@@ -1,9 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
   <ItemGroup>
     <ProjectReference Include="..\UndertaleModTool\UndertaleModLib\UndertaleModLib.csproj" />
   </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <WasmEnableWebCil>true</WasmEnableWebCil>
+
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+
 </Project>
