@@ -18,6 +18,33 @@ public partial class PatchService
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
+    private static void ForceUndertaleInitialization(UndertaleData data)
+    {
+        _ = data.Strings.Count;
+        _ = data.Sprites.Count;
+        _ = data.TexturePageItems.Count;
+        _ = data.EmbeddedTextures.Count;
+        _ = data.Code.Count;
+        _ = data.Variables.Count;
+        _ = data.Functions.Count;
+
+        foreach (var sprite in data.Sprites)
+        {
+            _ = sprite?.Name;
+            _ = sprite?.Textures?.Count;
+        }
+
+        foreach (var tpi in data.TexturePageItems)
+        {
+            _ = tpi?.TexturePage;
+        }
+
+        foreach (var tex in data.EmbeddedTextures)
+        {
+            _ = tex?.Name;
+        }
+    }
+
     private static void ValidateZipArchiveReadable(string zipPath, string context)
     {
         if (!File.Exists(zipPath))
@@ -378,7 +405,7 @@ public partial class PatchService
                         }
                         LogService.Log("[PatchService] Helpers data added to patch");
                     }
-
+                
                     if (includeExactFallback && exactPatchSourcePath == null)
                     {
                         var xdeltaService = new XDeltaService();
@@ -937,6 +964,12 @@ public partial class PatchService
                 // Save modified data
                 phaseSw.Restart();
                 LogService.Log("[PatchService] Saving modified data file...");
+                LogService.Log("[PatchService] Forcing UndertaleData initialization...");
+                // Forces lazy UndertaleData structures to initialize before serialization.
+                // Without this, UndertaleIO.Write can produce nondeterministic output
+                // despite identical semantic resource state.
+                ForceUndertaleInitialization(data);
+                LogService.Log("[PatchService] Initialization complete.");
                 var outDir = Path.GetDirectoryName(outputPath);
                 if (!string.IsNullOrEmpty(outDir) && !Directory.Exists(outDir))
                     Directory.CreateDirectory(outDir);

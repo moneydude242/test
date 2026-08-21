@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("G3MWebCoreTest")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+21d1282195998228e843224aa0cd2168c825d16d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+786cd3b9dd3e6e008fcd6f80ebccdd3649183d9b")]
 [assembly: System.Reflection.AssemblyProductAttribute("G3MWebCoreTest")]
 [assembly: System.Reflection.AssemblyTitleAttribute("G3MWebCoreTest")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

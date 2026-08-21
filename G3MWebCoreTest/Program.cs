@@ -1,41 +1,79 @@
 ﻿using G3MToolCLI.Services;
+using System.Security.Cryptography;
+using UndertaleModLib;
 
-Console.WriteLine("G3MWebCore native test");
+static void InspectData(string path)
+{
+    Console.WriteLine();
+    Console.WriteLine($"=== Inspecting {Path.GetFileName(path)} ===");
+
+    using var fs = File.OpenRead(path);
+    var data = UndertaleIO.Read(fs);
+
+    Console.WriteLine($"Strings:            {data.Strings.Count}");
+    Console.WriteLine($"Sprites:            {data.Sprites.Count}");
+    Console.WriteLine($"TexturePageItems:   {data.TexturePageItems.Count}");
+    Console.WriteLine($"EmbeddedTextures:   {data.EmbeddedTextures.Count}");
+    Console.WriteLine($"Code:               {data.Code.Count}");
+    Console.WriteLine($"Variables:          {data.Variables.Count}");
+    Console.WriteLine($"Functions:          {data.Functions.Count}");
+
+    int spriteIndex = 0;
+    foreach (var sprite in data.Sprites)
+    {
+        if (sprite?.Name?.Content == "spr_keycap")
+        {
+            Console.WriteLine($"spr_keycap sprite index: {spriteIndex}");
+            break;
+        }
+
+        spriteIndex++;
+    }
+
+    int stringIndex = 0;
+    foreach (var str in data.Strings)
+    {
+        if (str?.Content == "spr_keycap")
+        {
+            Console.WriteLine($"spr_keycap string index: {stringIndex}");
+            break;
+        }
+
+        stringIndex++;
+    }
+}
+
+Console.WriteLine("G3MWebCore Round Trip Test");
 
 var original = "/workspaces/test/data.win";
-var modified = "/workspaces/test/modified.data.win";
-var patch = "/workspaces/test/test.g3mpatch";
+var xdelta = "/workspaces/test/everyitem.xdelta";
+var patch = "/workspaces/test/everyitem.g3mpatch";
 var output = "/workspaces/test/patched.data.win";
-
 
 Console.WriteLine("Creating patch...");
 
-var createResult = await PatchService.CreatePatchAsync(
+var create = await PatchService.CreatePatchAsync(
     original,
-    modified,
+    xdelta,
     patch
 );
 
-Console.WriteLine($"Patch created: {createResult.Success}");
-
-if (!createResult.Success)
+if (!create.Success)
 {
-    Console.WriteLine(createResult.Error);
+    Console.WriteLine($"Create failed: {create.Error}");
     return;
 }
 
-
 Console.WriteLine("Applying patch...");
 
-var applyResult = await PatchService.ApplyPatchAsync(
+var apply = await PatchService.ApplyPatchAsync(
     original,
     patch,
     output
 );
 
-Console.WriteLine($"Patch applied: {applyResult.Success}");
-
-if (!applyResult.Success)
+if (!apply.Success)
 {
-    Console.WriteLine(applyResult.Error);
+    Console.WriteLine($"Apply failed: {apply.Error}");
+    return;
 }
