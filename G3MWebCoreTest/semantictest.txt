@@ -1,0 +1,163 @@
+using G3MToolCLI.Services;
+using System.Security.Cryptography;
+using UndertaleModLib;
+
+const string root = "/workspaces/test";
+
+const string original = $"{root}/data.win";
+const string patch = $"{root}/everyitem.semantic.g3mpatch";
+const string output = $"{root}/semantic.data.win";
+const string expected = $"{root}/everyitem.from.xdelta.data.win";
+
+Console.WriteLine("G3MWebCore Semantic Patch Test");
+Console.WriteLine("==============================");
+Console.WriteLine();
+
+if (!File.Exists(original))
+{
+    Console.WriteLine($"Missing: {original}");
+    return 1;
+}
+
+if (!File.Exists(patch))
+{
+    Console.WriteLine($"Missing: {patch}");
+    return 1;
+}
+
+if (!File.Exists(expected))
+{
+    Console.WriteLine($"Missing: {expected}");
+    return 1;
+}
+
+if (File.Exists(output))
+    File.Delete(output);
+
+Console.WriteLine("Applying semantic-only patch...");
+Console.WriteLine();
+
+var result = await PatchService.ApplyPatchAsync(
+    original,
+    patch,
+    output
+);
+
+Console.WriteLine();
+
+if (!result.Success)
+{
+    Console.WriteLine($"FAILED: {result.Error}");
+    return 1;
+}
+
+Console.WriteLine("Patch applied successfully.");
+Console.WriteLine();
+
+var expectedHash = await ComputeSha256Async(expected);
+var actualHash = await ComputeSha256Async(output);
+
+Console.WriteLine($"Expected binary SHA256: {expectedHash}");
+Console.WriteLine($"Actual binary SHA256:   {actualHash}");
+
+if (string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase))
+{
+    Console.WriteLine();
+    Console.WriteLine("Binary SHA256 matches.");
+}
+else
+{
+    Console.WriteLine();
+    Console.WriteLine("Binary SHA256 differs.");
+    Console.WriteLine("Continuing with semantic resource comparison...");
+}
+
+Console.WriteLine();
+Console.WriteLine("Comparing semantic resource hashes...");
+
+var expectedData = ReadData(expected);
+var actualData = ReadData(output);
+
+var expectedResources = ResourceHashService.HashAll(expectedData);
+var actualResources = ResourceHashService.HashAll(actualData);
+
+int differences = CompareResourceHashes(
+    expectedResources,
+    actualResources);
+
+Console.WriteLine();
+Console.WriteLine($"Semantic resource differences: {differences}");
+
+if (differences == 0)
+{
+    Console.WriteLine("SUCCESS: Semantic patch matches target resources.");
+    return 0;
+}
+
+Console.WriteLine("FAILED: Semantic resources still differ.");
+return 1;
+
+
+static UndertaleData ReadData(string path)
+{
+    using var stream = File.OpenRead(path);
+    return UndertaleIO.Read(stream);
+}
+
+
+static async Task<string> ComputeSha256Async(string path)
+{
+    await using var stream = new FileStream(
+        path,
+        FileMode.Open,
+        FileAccess.Read,
+        FileShare.Read,
+        bufferSize: 1024 * 1024,
+        options: FileOptions.SequentialScan);
+
+    var hash = await SHA256.HashDataAsync(stream);
+    return Convert.ToHexString(hash);
+}
+
+
+static int CompareResourceHashes(
+    Dictionary<string, Dictionary<string, string>> expected,
+    Dictionary<string, Dictionary<string, string>> actual)
+{
+    int differences = 0;
+
+    var allTypes = expected.Keys
+        .Union(actual.Keys)
+        .OrderBy(x => x);
+
+    foreach (var type in allTypes)
+    {
+        expected.TryGetValue(type, out var expectedResources);
+        actual.TryGetValue(type, out var actualResources);
+
+        expectedResources ??= [];
+        actualResources ??= [];
+
+        var allNames = expectedResources.Keys
+            .Union(actualResources.Keys)
+            .OrderBy(x => x);
+
+        foreach (var name in allNames)
+        {
+            expectedResources.TryGetValue(name, out var expectedHash);
+            actualResources.TryGetValue(name, out var actualHash);
+
+            if (expectedHash != actualHash)
+            {
+                differences++;
+
+                Console.WriteLine(
+                    $"RESOURCE DIFFERENCE: {type}/{name}\n" +
+                    $"  expected: {expectedHash ?? "<missing>"}\n" +
+                    $"  actual:   {actualHash ?? "<missing>"}");
+            }
+        }
+    }
+
+    return differences;
+}

@@ -57,6 +57,80 @@ public static class ResourceHashService
     }
 
     // ── GeneralInfo ──────────────────────────────────────────────────
+    private static string NormalizeCodeDisassembly(string text)
+    {
+        var lines = text.Split('\n');
+        var normalized = new List<string>();
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine
+                .Trim()
+                .TrimStart('\uFEFF');
+
+            // Ignore blank lines.
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            // Ignore decompiler metadata when CodeLocals are unavailable.
+            if (line.StartsWith(
+                    "; WARNING: Missing code locals",
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            // Normalize local-variable declarations.
+            //
+            // .localvar <variable-id> <name> <local-index>
+            //
+            // Both numeric IDs can differ between semantically
+            // equivalent data.win files.
+            if (line.StartsWith(
+                    ".localvar ",
+                    StringComparison.Ordinal))
+            {
+                var parts = line.Split(
+                    ' ',
+                    StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length >= 3)
+                {
+                    // "arguments" is implicit compiler metadata.
+                    if (parts[2] == "arguments")
+                        continue;
+
+                    normalized.Add($"{parts[0]} {parts[2]}");
+                }
+
+                continue;
+            }
+
+            // Normalize string-table references:
+            //
+            // push.s "text"@12345
+            //
+            // -> push.s "text"
+            if (line.StartsWith(
+                    "push.s ",
+                    StringComparison.Ordinal))
+            {
+                var at = line.LastIndexOf('@');
+
+                if (at > 0)
+                {
+                    var suffix = line[(at + 1)..];
+
+                    if (int.TryParse(suffix, out _))
+                        line = line[..at];
+                }
+            }
+
+            normalized.Add(line);
+        }
+
+        return string.Join('\n', normalized);
+    }
 
     private static Dictionary<string, string> HashGeneralInfo(UndertaleData data)
     {
@@ -845,18 +919,34 @@ public static class ResourceHashService
             {
                 // Hash disassembly (parent + children) for name-stable comparison
                 using var ms = new MemoryStream();
-                var bytes = Encoding.UTF8.GetBytes(entry.Disassemble(data.Variables, data.CodeLocals.For(entry)));
+                var disassembly = NormalizeCodeDisassembly(
+                    entry.Disassemble(
+                        data.Variables,
+                        data.CodeLocals.For(entry)));
+
+                var bytes = Encoding.UTF8.GetBytes(disassembly);
                 ms.Write(bytes, 0, bytes.Length);
+
                 foreach (var child in entry.ChildEntries)
                 {
-                    if (child?.Name?.Content == null) continue;
+                    if (child?.Name?.Content == null)
+                        continue;
+
                     try
                     {
-                        ms.WriteByte(0); // separator
-                        var childBytes = Encoding.UTF8.GetBytes(child.Disassemble(data.Variables, data.CodeLocals.For(child)));
+                        ms.WriteByte(0);
+
+                        var childDisassembly = NormalizeCodeDisassembly(
+                            child.Disassemble(
+                                data.Variables,
+                                data.CodeLocals.For(child)));
+
+                        var childBytes = Encoding.UTF8.GetBytes(childDisassembly);
                         ms.Write(childBytes, 0, childBytes.Length);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
                 result[entry.Name.Content] = HexHash(ms.GetBuffer().AsSpan(0, (int)ms.Length));
             }
