@@ -1,79 +1,46 @@
-﻿using G3MToolCLI.Services;
-using System.Security.Cryptography;
-using UndertaleModLib;
+using G3MToolCLI.Services;
 
-static void InspectData(string path)
+const string Root = "/workspaces/test";
+
+Console.WriteLine("G3MWebCore Regression Tests");
+Console.WriteLine("===========================");
+Console.WriteLine();
+
+var tests = new[]
 {
+    ("XDelta Conversion Test", (Func<Task<bool>>)(() => RegressionTests.RunXDeltaConversionTestAsync(Root))),
+    ("Single Patch Test", (Func<Task<bool>>)(() => RegressionTests.RunSinglePatchTestAsync(Root))),
+    ("Merge Test", (Func<Task<bool>>)(() => RegressionTests.RunMergeTestAsync(Root)))
+};
+
+int passed = 0;
+
+foreach (var (name, test) in tests)
+{
+    Console.WriteLine($"=== {name} ===");
+
+    try
+    {
+        if (await test())
+        {
+            Console.WriteLine($"PASS: {name}");
+            passed++;
+        }
+        else
+        {
+            Console.WriteLine($"FAIL: {name}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"FAIL: {name}");
+        Console.WriteLine($"Error: {ex.Message}");
+    }
+
     Console.WriteLine();
-    Console.WriteLine($"=== Inspecting {Path.GetFileName(path)} ===");
-
-    using var fs = File.OpenRead(path);
-    var data = UndertaleIO.Read(fs);
-
-    Console.WriteLine($"Strings:            {data.Strings.Count}");
-    Console.WriteLine($"Sprites:            {data.Sprites.Count}");
-    Console.WriteLine($"TexturePageItems:   {data.TexturePageItems.Count}");
-    Console.WriteLine($"EmbeddedTextures:   {data.EmbeddedTextures.Count}");
-    Console.WriteLine($"Code:               {data.Code.Count}");
-    Console.WriteLine($"Variables:          {data.Variables.Count}");
-    Console.WriteLine($"Functions:          {data.Functions.Count}");
-
-    int spriteIndex = 0;
-    foreach (var sprite in data.Sprites)
-    {
-        if (sprite?.Name?.Content == "spr_keycap")
-        {
-            Console.WriteLine($"spr_keycap sprite index: {spriteIndex}");
-            break;
-        }
-
-        spriteIndex++;
-    }
-
-    int stringIndex = 0;
-    foreach (var str in data.Strings)
-    {
-        if (str?.Content == "spr_keycap")
-        {
-            Console.WriteLine($"spr_keycap string index: {stringIndex}");
-            break;
-        }
-
-        stringIndex++;
-    }
 }
 
-Console.WriteLine("G3MWebCore Round Trip Test");
+Console.WriteLine("===========================");
+Console.WriteLine($"Passed: {passed}/{tests.Length}");
 
-var original = "/workspaces/test/data.win";
-var xdelta = "/workspaces/test/everyitem.xdelta";
-var patch = "/workspaces/test/everyitem.g3mpatch";
-var output = "/workspaces/test/patched.data.win";
-
-Console.WriteLine("Creating patch...");
-
-var create = await PatchService.CreatePatchAsync(
-    original,
-    xdelta,
-    patch
-);
-
-if (!create.Success)
-{
-    Console.WriteLine($"Create failed: {create.Error}");
-    return;
-}
-
-Console.WriteLine("Applying patch...");
-
-var apply = await PatchService.ApplyPatchAsync(
-    original,
-    patch,
-    output
-);
-
-if (!apply.Success)
-{
-    Console.WriteLine($"Apply failed: {apply.Error}");
-    return;
-}
+return passed == tests.Length ? 0 : 1;
