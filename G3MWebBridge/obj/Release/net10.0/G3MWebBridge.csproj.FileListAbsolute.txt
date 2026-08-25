@@ -7,7 +7,6 @@
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.CodeAnalysis.CSharp.borqriiz6d.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.CodeAnalysis.Scripting.5cvt01fthy.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.CodeAnalysis.cu3n0drkqk.wasm
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.DotNet.HotReload.WebAssembly.Browser.s61xs90aba.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.VisualBasic.Core.s01ygrxnou.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.VisualBasic.mcss3c947q.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.Win32.Primitives.r8e0zxpfe0.wasm
@@ -178,7 +177,6 @@
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Xml.exkkf0ue13.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Underanalyzer.e684ade7p9.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Underanalyzer.uoykm5vxqz.pdb
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/UndertaleModLib.j8axs2euht.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/WindowsBase.1bna4dlnz5.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/cs/Microsoft.CodeAnalysis.CSharp.Scripting.resources.10d2xkckzy.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/cs/Microsoft.CodeAnalysis.CSharp.resources.lm11cp0qqs.wasm
@@ -242,7 +240,6 @@
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/zh-Hant/Microsoft.CodeAnalysis.resources.ke0y30c2s6.wasm
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Runtime.Serialization.xlg8rg3fxp.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Net.Quic.5at1qtuzp3.wasm.gz
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/UndertaleModLib.j8axs2euht.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Configuration.gtk5rogi73.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.IO.FileSystem.AccessControl.8n7zqskxkd.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Net.Http.Json.5qm1oyxvyh.wasm.gz
@@ -355,7 +352,6 @@
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/pt-BR/Microsoft.CodeAnalysis.CSharp.resources.9m3fk6qm6i.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/dotnet.runtime.js.map.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Xml.XPath.XDocument.1l4l8dvoxa.wasm.gz
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/Microsoft.DotNet.HotReload.WebAssembly.Browser.s61xs90aba.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Security.0z6z3qehfj.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/System.Net.Requests.qqzugy2ce8.wasm.gz
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/ja/Microsoft.CodeAnalysis.Scripting.resources.q33dwc6lyb.wasm.gz
@@ -501,7 +497,6 @@
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/Microsoft.CodeAnalysis.CSharp.dll
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/Microsoft.CodeAnalysis.CSharp.Scripting.dll
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/Microsoft.CodeAnalysis.Scripting.dll
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/Microsoft.DotNet.HotReload.WebAssembly.Browser.dll
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/ICSharpCode.SharpZipLib.dll
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/cs/Microsoft.CodeAnalysis.resources.dll
 /workspaces/test/G3MWebBridge/bin/Release/net10.0/de/Microsoft.CodeAnalysis.resources.dll
@@ -750,7 +745,6 @@
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/Microsoft.CodeAnalysis.CSharp.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/Microsoft.CodeAnalysis.CSharp.Scripting.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/Microsoft.CodeAnalysis.Scripting.wasm
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/Microsoft.DotNet.HotReload.WebAssembly.Browser.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/ICSharpCode.SharpZipLib.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/cs/Microsoft.CodeAnalysis.resources.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/de/Microsoft.CodeAnalysis.resources.wasm
@@ -981,15 +975,12 @@
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/webcil/G3MWebBridge.wasm
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/G3MWebBridge.genruntimeconfig.cache
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/dotnet.js
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/f9o902iofb-{0}-99zm1jdh75-99zm1jdh75.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/xfgggsz1me-{0}-sye1q0d9om-sye1q0d9om.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/raklirvc8y-{0}-nvm4c5zib2-nvm4c5zib2.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/jpfyj5udoe-{0}-u00cj7fpzo-u00cj7fpzo.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/2is2wy98xy-{0}-cu3n0drkqk-cu3n0drkqk.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/gjn5vqq7t0-{0}-borqriiz6d-borqriiz6d.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/8qmua8nxxu-{0}-tsvimwzpjo-tsvimwzpjo.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/8fvh7sqnaw-{0}-5cvt01fthy-5cvt01fthy.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/h2t6mhb7hl-{0}-s61xs90aba-s61xs90aba.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/kqre0t51fj-{0}-f8y4cl7s67-f8y4cl7s67.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/859qjuvkvm-{0}-jt7963aywi-jt7963aywi.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/gnub6bjote-{0}-vifcvwywu5-vifcvwywu5.gz
@@ -1221,7 +1212,6 @@
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/4dm2013k43-{0}-r2kbxkuujc-r2kbxkuujc.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/gzqah6zj73-{0}-v2jj96inkz-v2jj96inkz.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/eqoww9xacl-{0}-e684ade7p9-e684ade7p9.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/0n6iuwckxc-{0}-j8axs2euht-j8axs2euht.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/mwbfzpi1se-{0}-uoykm5vxqz-uoykm5vxqz.gz
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/staticwebassets.build.json
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/staticwebassets.build.json.cache
@@ -1233,11 +1223,15 @@
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/refint/G3MWebBridge.dll
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/G3MWebBridge.pdb
 /workspaces/test/G3MWebBridge/obj/Release/net10.0/ref/G3MWebBridge.dll
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.3j1ttwdxpu.pdb
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.ochq6imsqp.wasm
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.ochq6imsqp.wasm.gz
-/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.3j1ttwdxpu.pdb.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/mney988qam-{0}-4w3ydfre12-4w3ydfre12.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/o7dh6pg61l-{0}-ochq6imsqp-ochq6imsqp.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/z8a29rbhpl-{0}-3j1ttwdxpu-3j1ttwdxpu.gz
-/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/xyut4izc3e-{0}-6gctaravxz-6gctaravxz.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/xfgggsz1me-{0}-p7hsoxzt2k-p7hsoxzt2k.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/mney988qam-{0}-2gr5fieo8f-2gr5fieo8f.gz
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.w1112q0ryc.pdb
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.xk88eu1li6.wasm
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/UndertaleModLib.kznqckj5f5.wasm
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/UndertaleModLib.kznqckj5f5.wasm.gz
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.xk88eu1li6.wasm.gz
+/workspaces/test/G3MWebBridge/bin/Release/net10.0/wwwroot/_framework/G3MWebBridge.w1112q0ryc.pdb.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/0n6iuwckxc-{0}-kznqckj5f5-kznqckj5f5.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/o7dh6pg61l-{0}-xk88eu1li6-xk88eu1li6.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/z8a29rbhpl-{0}-w1112q0ryc-w1112q0ryc.gz
+/workspaces/test/G3MWebBridge/obj/Release/net10.0/compressed/xyut4izc3e-{0}-wg9w8i9xnp-wg9w8i9xnp.gz

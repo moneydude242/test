@@ -1,0 +1,6 @@
+cd /workspaces/test
+dotnet clean G3MWebBridge/G3MWebBridge.csproj
+dotnet publish G3MWebBridge/G3MWebBridge.csproj -c Release
+
+cd /workspaces/test/G3MWebBridge/bin/Release/net10.0/publish/wwwroot
+python3 -m http.server 8080

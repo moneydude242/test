@@ -1,17 +1,32 @@
 <!DOCTYPE html>
-<!--  Licensed to the .NET Foundation under one or more agreements. -->
-<!-- The .NET Foundation licenses this file to you under the MIT license. -->
 <html>
 
 <head>
-  <title>G3MWebBridge</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script type='module' src="./main.js"></script>
+  <title>G3MWebBridge Test</title>
+
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 24px;
+    }
+
+    #out {
+      white-space: pre-wrap;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body>
-  <span id="out"></span>
+  <h1>G3MWebBridge Test</h1>
+  <pre id="out">Loading...</pre>
+
+  <script type="module" src="./main.js"></script>
 </body>
 
 </html>

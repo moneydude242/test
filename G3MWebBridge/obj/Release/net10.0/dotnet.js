@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "G3MWebBridge",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-6Bk3md6LeL0h5YZ/PpJWZimUgbVzCuSx4UAXr3z6lDc=",
+    "hash": "sha256-BvCLQriDKPQQha/Nojj6L+zbpcBYbEPuWW2qi17XVEc=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.rjbmzc4jpg.js"
@@ -72,12 +72,6 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
         "virtualPath": "Microsoft.CodeAnalysis.Scripting.wasm",
         "name": "Microsoft.CodeAnalysis.Scripting.5cvt01fthy.wasm",
         "hash": "sha256-G+j3M/M6U9fQeK9+2jvNpLsg9PGs6wJZgvkltF69l7A=",
-        "cache": "force-cache"
-      },
-      {
-        "virtualPath": "Microsoft.DotNet.HotReload.WebAssembly.Browser.wasm",
-        "name": "Microsoft.DotNet.HotReload.WebAssembly.Browser.s61xs90aba.wasm",
-        "hash": "sha256-RGR26Z4VQJtomvI6AGG3IUc0Wyim6j5MtOBDOrkEFB4=",
         "cache": "force-cache"
       },
       {
@@ -1114,14 +1108,14 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "UndertaleModLib.wasm",
-        "name": "UndertaleModLib.j8axs2euht.wasm",
-        "hash": "sha256-E/ZdT4Gqlf9M0hzHQLOo/kZh76ZYwGq3GGJDoL6EEzI=",
+        "name": "UndertaleModLib.kznqckj5f5.wasm",
+        "hash": "sha256-EDgc07EGfJfir+Jz6t+arHzB2KHR2R/MohWnBOg2Iuw=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "G3MWebBridge.wasm",
-        "name": "G3MWebBridge.ochq6imsqp.wasm",
-        "hash": "sha256-qHdbveHR5IOHdSiO5dXTPzxsTU3EgMU+P0y0gKB6zJ4=",
+        "name": "G3MWebBridge.xk88eu1li6.wasm",
+        "hash": "sha256-j8yPahATzY+ouamOcC9JJMfU0C6VnracnX+eRUJLSJ4=",
         "cache": "force-cache"
       }
     ],
@@ -1134,8 +1128,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "G3MWebBridge.pdb",
-        "name": "G3MWebBridge.3j1ttwdxpu.pdb",
-        "hash": "sha256-AYbUciYKoi+iB6Uq65iRGQNWVTKRrktMLFiFap/ZJuo=",
+        "name": "G3MWebBridge.w1112q0ryc.pdb",
+        "hash": "sha256-bJpEmPBrZVWyrysXKNC49ex6ZQopfdTwYozOxvSaIFQ=",
         "cache": "force-cache"
       }
     ],
@@ -1478,29 +1472,13 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
           "cache": "force-cache"
         }
       ]
-    },
-    "libraryInitializers": [
-      {
-        "name": "_content/Microsoft.DotNet.HotReload.WebAssembly.Browser/Microsoft.DotNet.HotReload.WebAssembly.Browser.99zm1jdh75.lib.module.js"
-      }
-    ],
-    "modulesAfterConfigLoaded": [
-      {
-        "name": "../_content/Microsoft.DotNet.HotReload.WebAssembly.Browser/Microsoft.DotNet.HotReload.WebAssembly.Browser.99zm1jdh75.lib.module.js"
-      }
-    ]
+    }
   },
   "debugLevel": -1,
   "globalizationMode": "invariant",
   "runtimeConfig": {
     "runtimeOptions": {
       "configProperties": {
-        "Microsoft.Extensions.DependencyInjection.VerifyOpenGenericServiceTrimmability": true,
-        "System.ComponentModel.DefaultValueAttribute.IsSupported": false,
-        "System.ComponentModel.Design.IDesignerHost.IsSupported": false,
-        "System.ComponentModel.TypeConverter.EnableUnsafeBinaryFormatterInDesigntimeLicenseContextSerialization": false,
-        "System.ComponentModel.TypeDescriptor.IsComObjectDescriptorSupported": false,
-        "System.Data.DataSet.XmlSerializationIsSupported": false,
         "System.Diagnostics.Debugger.IsSupported": false,
         "System.Diagnostics.Metrics.Meter.IsSupported": false,
         "System.Diagnostics.Tracing.EventSource.IsSupported": false,
@@ -1512,18 +1490,9 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
         "System.Net.Http.WasmEnableStreamingResponse": true,
         "System.Net.SocketsHttpHandler.Http3Support": false,
         "System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
-        "System.Resources.ResourceManager.AllowCustomResourceTypes": false,
         "System.Resources.UseSystemResourceKeys": true,
-        "System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported": true,
-        "System.Runtime.InteropServices.BuiltInComInterop.IsSupported": false,
-        "System.Runtime.InteropServices.EnableConsumingManagedCodeFromNativeHosting": false,
-        "System.Runtime.InteropServices.EnableCppCLIHostActivation": false,
-        "System.Runtime.InteropServices.Marshalling.EnableGeneratedComInterfaceComImportInterop": false,
         "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
-        "System.StartupHookProvider.IsSupported": false,
-        "System.Text.Encoding.EnableUnsafeUTF7Encoding": false,
-        "System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault": false,
-        "System.Threading.Thread.EnableAutoreleasePool": false
+        "System.Text.Encoding.EnableUnsafeUTF7Encoding": false
       }
     }
   }

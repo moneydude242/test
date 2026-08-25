@@ -1,25 +1,84 @@
 import { dotnet } from './_framework/dotnet.js';
 
-const { setModuleImports, getAssemblyExports, getConfig } = await dotnet
-    .withDiagnosticTracing(false)
-    .withApplicationArgumentsFromQuery()
-    .create();
+const out = document.getElementById('out');
 
-setModuleImports('main.js', {
-    window: {
-        location: {
-            href: () => globalThis.window.location.href
+function show(message) {
+    out.textContent += message + '\n';
+}
+
+out.textContent = '';
+
+show('G3MWebBridge starting...');
+show('Loading .NET runtime...');
+
+try {
+    const {
+        setModuleImports,
+        getAssemblyExports,
+        getConfig
+    } = await dotnet
+        .withDiagnosticTracing(true)
+        .withApplicationArgumentsFromQuery()
+        .create();
+
+    show('dotnet.create() succeeded.');
+
+    setModuleImports('main.js', {
+        window: {
+            location: {
+                href: () => globalThis.window.location.href
+            }
         }
+    });
+
+    show('Module imports configured.');
+
+    const config = getConfig();
+
+    show('Assembly: ' + config.mainAssemblyName);
+
+    const exports =
+        await getAssemblyExports(config.mainAssemblyName);
+
+    show('Assembly exports loaded.');
+
+    const info = exports.Program.GetLibraryInfo();
+
+    show('Library:');
+    show(info);
+
+    show('');
+    show('Downloading data.win...');
+
+    const response = await fetch('./data.win');
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to download data.win: HTTP ${response.status}`
+        );
     }
-});
 
-const config = getConfig();
-const exports = await getAssemblyExports(config.mainAssemblyName);
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
 
-const text = exports.Program.GetLibraryInfo();
+    show(`Downloaded data.win: ${bytes.length} bytes`);
 
-console.log('[G3MWebBridge]', text);
+    show('');
+    show('Sending data.win to UndertaleModLib...');
 
-document.getElementById('out').textContent = text;
+    const result =
+        exports.Program.TestReadDataWin(bytes);
 
-await dotnet.run();
+    show('');
+    show(result);
+
+    show('');
+    show('SUCCESS — test completed.');
+}
+catch (error) {
+    show('');
+    show('FAILED:');
+    show(String(error));
+    show('');
+    show(error?.stack || '(no stack trace)');
+}
