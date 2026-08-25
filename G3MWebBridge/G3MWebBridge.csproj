@@ -13,8 +13,6 @@
     <WasmEnableWebCil>true</WasmEnableWebCil>
 
     <InvariantGlobalization>true</InvariantGlobalization>
-
-    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
 </Project>

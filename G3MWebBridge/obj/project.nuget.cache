@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XqHwuBJfofw=",
+  "dgSpecHash": "kl+Nh1xE7+Q=",
   "success": true,
   "projectFilePath": "/workspaces/test/G3MWebBridge/G3MWebBridge.csproj",
   "expectedPackageFiles": [
@@ -11,6 +11,7 @@
     "/home/codespace/.nuget/packages/microsoft.codeanalysis.csharp/5.6.0/microsoft.codeanalysis.csharp.5.6.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.codeanalysis.csharp.scripting/5.6.0/microsoft.codeanalysis.csharp.scripting.5.6.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.codeanalysis.scripting.common/5.6.0/microsoft.codeanalysis.scripting.common.5.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.net.illink.tasks/10.0.4/microsoft.net.illink.tasks.10.0.4.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.net.sdk.webassembly.pack/10.0.8/microsoft.net.sdk.webassembly.pack.10.0.8.nupkg.sha512",
     "/home/codespace/.nuget/packages/sharpziplib/1.4.2/sharpziplib.1.4.2.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.netcore.app.ref/10.0.8/microsoft.netcore.app.ref.10.0.8.nupkg.sha512"

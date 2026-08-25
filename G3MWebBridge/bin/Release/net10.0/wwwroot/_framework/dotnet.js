@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "G3MWebBridge",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-BvCLQriDKPQQha/Nojj6L+zbpcBYbEPuWW2qi17XVEc=",
+    "hash": "sha256-wZcB53gk+vn/AqqGyZ1xJhB19su9obg2p0EZQNXdJbo=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.rjbmzc4jpg.js"
@@ -1114,8 +1114,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "G3MWebBridge.wasm",
-        "name": "G3MWebBridge.xk88eu1li6.wasm",
-        "hash": "sha256-j8yPahATzY+ouamOcC9JJMfU0C6VnracnX+eRUJLSJ4=",
+        "name": "G3MWebBridge.xpju0ojjst.wasm",
+        "hash": "sha256-q/B9Ni3TE2v9P19rYWSYgmVYyVYEwSJMKXi6eil+W/Q=",
         "cache": "force-cache"
       }
     ],
@@ -1128,8 +1128,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "G3MWebBridge.pdb",
-        "name": "G3MWebBridge.w1112q0ryc.pdb",
-        "hash": "sha256-bJpEmPBrZVWyrysXKNC49ex6ZQopfdTwYozOxvSaIFQ=",
+        "name": "G3MWebBridge.q9np4xobdi.pdb",
+        "hash": "sha256-DioDp6qj3XRv0EsuLlSRu7Fjobp9lUHujGCS0rJfR60=",
         "cache": "force-cache"
       }
     ],
@@ -1479,6 +1479,12 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "runtimeConfig": {
     "runtimeOptions": {
       "configProperties": {
+        "Microsoft.Extensions.DependencyInjection.VerifyOpenGenericServiceTrimmability": true,
+        "System.ComponentModel.DefaultValueAttribute.IsSupported": false,
+        "System.ComponentModel.Design.IDesignerHost.IsSupported": false,
+        "System.ComponentModel.TypeConverter.EnableUnsafeBinaryFormatterInDesigntimeLicenseContextSerialization": false,
+        "System.ComponentModel.TypeDescriptor.IsComObjectDescriptorSupported": false,
+        "System.Data.DataSet.XmlSerializationIsSupported": false,
         "System.Diagnostics.Debugger.IsSupported": false,
         "System.Diagnostics.Metrics.Meter.IsSupported": false,
         "System.Diagnostics.Tracing.EventSource.IsSupported": false,
@@ -1490,9 +1496,18 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
         "System.Net.Http.WasmEnableStreamingResponse": true,
         "System.Net.SocketsHttpHandler.Http3Support": false,
         "System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
+        "System.Resources.ResourceManager.AllowCustomResourceTypes": false,
         "System.Resources.UseSystemResourceKeys": true,
+        "System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported": true,
+        "System.Runtime.InteropServices.BuiltInComInterop.IsSupported": false,
+        "System.Runtime.InteropServices.EnableConsumingManagedCodeFromNativeHosting": false,
+        "System.Runtime.InteropServices.EnableCppCLIHostActivation": false,
+        "System.Runtime.InteropServices.Marshalling.EnableGeneratedComInterfaceComImportInterop": false,
         "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
-        "System.Text.Encoding.EnableUnsafeUTF7Encoding": false
+        "System.StartupHookProvider.IsSupported": false,
+        "System.Text.Encoding.EnableUnsafeUTF7Encoding": false,
+        "System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault": false,
+        "System.Threading.Thread.EnableAutoreleasePool": false
       }
     }
   }
