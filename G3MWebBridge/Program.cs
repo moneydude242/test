@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
+using System.Collections.Generic;
 using UndertaleModLib;
 
 public partial class Program
@@ -32,6 +34,101 @@ public partial class Program
             return FormatException(ex);
         }
     }
+    
+    private static string RegisterAllUnserializeCountFunctions(
+        UndertaleReader reader)
+    {
+        var result = new System.Text.StringBuilder();
+
+        var assembly = typeof(UndertaleReader).Assembly;
+
+        var dictField = typeof(UndertaleReader).GetField(
+            "unserializeFuncDict",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        if (dictField == null)
+            return "ERROR: unserializeFuncDict field not found.";
+
+        if (dictField.GetValue(reader)
+            is not Dictionary<Type, Func<UndertaleReader, uint>> dict)
+        {
+            return "ERROR: unserializeFuncDict has an unexpected type.";
+        }
+
+        int registered = 0;
+        int alreadyRegistered = 0;
+        int skipped = 0;
+        int failed = 0;
+
+        var countMethodFlags =
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.Static;
+
+        foreach (var type in assembly.GetTypes())
+        {
+            if (!typeof(UndertaleObject).IsAssignableFrom(type))
+                continue;
+
+            if (type.ContainsGenericParameters)
+                continue;
+
+            var method = type.GetMethod(
+                "UnserializeChildObjectCount",
+                countMethodFlags,
+                binder: null,
+                types: new[] { typeof(UndertaleReader) },
+                modifiers: null);
+
+            if (method == null)
+            {
+                skipped++;
+                continue;
+            }
+
+            if (dict.ContainsKey(type))
+            {
+                alreadyRegistered++;
+                continue;
+            }
+
+            try
+            {
+                var func =
+                    (Func<UndertaleReader, uint>)
+                    method.CreateDelegate(
+                        typeof(Func<UndertaleReader, uint>));
+
+                dict.Add(type, func);
+                registered++;
+            }
+            catch (Exception ex)
+            {
+                failed++;
+
+                result.AppendLine(
+                    $"FAILED: {type.FullName}");
+                result.AppendLine(ex.ToString());
+            }
+        }
+
+        result.AppendLine(
+            $"Registered {registered} missing count functions.");
+
+        result.AppendLine(
+            $"Already registered: {alreadyRegistered}");
+
+        result.AppendLine(
+            $"Skipped {skipped} types without count functions.");
+
+        result.AppendLine(
+            $"Failed: {failed}");
+
+        result.AppendLine(
+            $"Final unserializeFuncDict count: {dict.Count}");
+
+        return result.ToString();
+    }
 
     [JSExport]
     public static string TestReadDataWin(byte[] bytes)
@@ -42,7 +139,8 @@ public partial class Program
 
             var result = new System.Text.StringBuilder();
 
-            result.AppendLine("=== UNDERTALE READER STATE DIAGNOSTIC ===");
+            result.AppendLine("=== G3MWebBridge data.win test ===");
+            result.AppendLine($"Bytes: {bytes.Length}");
             result.AppendLine();
 
             var reader = new UndertaleReader(
@@ -53,135 +151,32 @@ public partial class Program
                         $"[{(important ? "IMPORTANT" : "WARNING")}] {warning}");
                 });
 
-            var flags =
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic;
+            result.AppendLine("Repairing UndertaleModLib count-function registry...");
 
-            var bytecodeField = typeof(UndertaleReader).GetField(
-                "BytecodeAddresses",
-                flags);
+            var repairResult =
+                RegisterAllUnserializeCountFunctions(reader);
 
-            var countExceptionField = typeof(UndertaleReader).GetField(
-                "countUnserializeExc",
-                flags);
-
-            result.AppendLine(
-                "Initial BytecodeAddresses: " +
-                (bytecodeField?.GetValue(reader) == null
-                    ? "NULL"
-                    : "INITIALIZED"));
-
-            result.AppendLine(
-                "Initial countUnserializeExc: " +
-                (countExceptionField?.GetValue(reader) == null
-                    ? "NULL"
-                    : "EXCEPTION"));
-
+            result.AppendLine(repairResult);
             result.AppendLine();
 
-            // Look for the CODE-specific counting method.
-            var codeType = typeof(UndertaleModLib.Models.UndertaleCode);
+            result.AppendLine("Reading data.win...");
 
-            result.AppendLine("UndertaleCode methods:");
-
-            foreach (var method in codeType.GetMethods(flags))
-            {
-                if (method.Name.Contains("Unserialize"))
-                {
-                    result.AppendLine(
-                        $"  {method.Name} : {method}");
-                }
-            }
+            reader.ReadUndertaleData();
 
             result.AppendLine();
-
-            // Look for the CODE chunk type.
-            var codeChunkType =
-                typeof(UndertaleModLib.UndertaleChunkCODE);
-
-            result.AppendLine("UndertaleChunkCODE methods:");
-
-            foreach (var method in codeChunkType.GetMethods(flags))
-            {
-                if (method.Name.Contains("Unserialize"))
-                {
-                    result.AppendLine(
-                        $"  {method.Name} : {method}");
-                }
-            }
-
-            result.AppendLine();
-
-            // Inspect the reader's methods that perform object counting.
-            result.AppendLine("UndertaleReader counting methods:");
-
-            foreach (var method in typeof(UndertaleReader).GetMethods(flags))
-            {
-                if (method.Name.Contains("Count") ||
-                    method.Name.Contains("count"))
-                {
-                    result.AppendLine(
-                        $"  {method.Name} : {method}");
-                }
-            }
-
-            result.AppendLine();
-            result.AppendLine("=== STARTING NORMAL READ ===");
-            result.AppendLine();
-
-            try
-            {
-                reader.ReadUndertaleData();
-
-                result.AppendLine("ReadUndertaleData: SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                result.AppendLine("ReadUndertaleData: FAILED");
-                result.AppendLine();
-                result.AppendLine(ex.ToString());
-            }
-
-            result.AppendLine();
-
-            result.AppendLine(
-                "Final BytecodeAddresses: " +
-                (bytecodeField?.GetValue(reader) == null
-                    ? "NULL"
-                    : "INITIALIZED"));
-
-            var finalCountException =
-                countExceptionField?.GetValue(reader) as Exception;
-
-            result.AppendLine(
-                "Final countUnserializeExc: " +
-                (finalCountException == null
-                    ? "NULL"
-                    : "EXCEPTION"));
-
-            if (finalCountException != null)
-            {
-                result.AppendLine();
-                result.AppendLine("=== ORIGINAL OBJECT-COUNTING EXCEPTION ===");
-                result.AppendLine();
-                result.AppendLine(finalCountException.ToString());
-                result.AppendLine();
-                result.AppendLine("=== END ORIGINAL EXCEPTION ===");
-            }
-
-            result.AppendLine();
-            result.AppendLine("=== END DIAGNOSTIC ===");
-
-            result.AppendLine();
-            result.AppendLine("=== END DIAGNOSTIC ===");
+            result.AppendLine("ReadUndertaleData: SUCCESS");
 
             return result.ToString();
         }
         catch (Exception ex)
         {
+            Console.WriteLine(
+                "[G3MWebBridge] data.win parsing FAILED.");
+
+            Console.WriteLine(ex.ToString());
+
             return
-                "DIAGNOSTIC ITSELF FAILED:\n\n" +
+                "FAILED — data.win parsing error:\n\n" +
                 FormatException(ex);
         }
     }

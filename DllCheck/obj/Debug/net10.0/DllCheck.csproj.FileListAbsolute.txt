@@ -1,0 +1,5 @@
+/workspaces/test/DllCheck/obj/Debug/net10.0/DllCheck.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/test/DllCheck/obj/Debug/net10.0/DllCheck.AssemblyInfoInputs.cache
+/workspaces/test/DllCheck/obj/Debug/net10.0/DllCheck.AssemblyInfo.cs
+/workspaces/test/DllCheck/obj/Debug/net10.0/DllCheck.csproj.CoreCompileInputs.cache
+/workspaces/test/DllCheck/obj/Debug/net10.0/DllCheck.sourcelink.json

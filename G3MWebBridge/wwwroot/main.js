@@ -48,14 +48,33 @@ try {
     show(info);
 
     show('');
-    show('Downloading data.win...');
+    show('Loading data.win...');
 
-    const response = await fetch('./data.win');
+    const DATA_URL = './data.win';
+    const DATA_CACHE = 'g3mwebbridge-data-v1';
 
-    if (!response.ok) {
-        throw new Error(
-            `Failed to download data.win: HTTP ${response.status}`
-        );
+    const cache = await caches.open(DATA_CACHE);
+
+    let response = await cache.match(DATA_URL);
+
+    if (response) {
+        show('data.win found in browser cache.');
+    } else {
+        show('data.win not cached; downloading...');
+
+        response = await fetch(DATA_URL, {
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                `Failed to download data.win: HTTP ${response.status}`
+            );
+        }
+
+        await cache.put(DATA_URL, response.clone());
+
+        show('data.win downloaded and cached.');
     }
 
     const buffer = await response.arrayBuffer();

@@ -1,0 +1,6 @@
+<linker>
+  <assembly fullname="UndertaleModLib">
+    <type fullname="UndertaleModLib.Models.UndertaleOptions" preserve="all" />
+    <type fullname="UndertaleModLib.Models.UndertaleTags" preserve="all" />
+  </assembly>
+</linker>

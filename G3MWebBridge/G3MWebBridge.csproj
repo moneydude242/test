@@ -13,6 +13,10 @@
     <WasmEnableWebCil>true</WasmEnableWebCil>
 
     <InvariantGlobalization>true</InvariantGlobalization>
+
   </PropertyGroup>
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
+  </ItemGroup>
 
 </Project>
