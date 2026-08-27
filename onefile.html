@@ -2,6 +2,506 @@
 <html lang="en-us">
 
 <head>
+    <script>
+(function(){
+'use strict';
+const MAX_LOG_LINES=1000;
+const SECRET_WORD='debug';
+const MOD_TRIGGER_WORD='mod';
+
+const cmdInput=document.createElement('input');
+cmdInput.type='text';
+cmdInput.autocomplete='off';
+cmdInput.spellcheck=false;
+cmdInput.style.cssText='flex-grow:1;background:transparent;border:none;color:#fff;font-family:monospace;outline:none;-webkit-user-select:text;user-select:text;';
+
+const origCanvasFocus=HTMLCanvasElement.prototype.focus;
+HTMLCanvasElement.prototype.focus=function(...args){
+    if(document.activeElement===cmdInput)return;
+    return origCanvasFocus.apply(this,args);
+};
+
+// Preserve the original GameMaker keyboard-isolation mechanism.
+const origAEL=EventTarget.prototype.addEventListener;
+EventTarget.prototype.addEventListener=function(type,listener,options){
+    if((type==='keydown'||type==='keyup'||type==='keypress')&&listener){
+        const origListener=listener;
+        listener=function(e){
+            if(document.activeElement===cmdInput&&this!==cmdInput)return;
+            if(typeof origListener==='function')return origListener.apply(this,arguments);
+            if(origListener&&typeof origListener.handleEvent==='function')return origListener.handleEvent(e);
+        };
+    }
+    return origAEL.call(this,type,listener,options);
+};
+
+const debugDiv=document.createElement('div');
+debugDiv.style.cssText='position:fixed;top:0;left:0;width:100%;height:40vh;background:rgba(0,0,0,0.95);color:#00ff00;font-family:monospace;font-size:12px;z-index:999999;padding:10px;box-sizing:border-box;border-bottom:2px solid #00ff00;pointer-events:auto;display:none;flex-direction:column;-webkit-user-select:text;user-select:text;';
+
+const headerRow=document.createElement('div');
+headerRow.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid #333;padding-bottom:4px;flex-shrink:0;-webkit-user-select:none;user-select:none;';
+const title=document.createElement('span');
+title.textContent='--- DEBUG CONSOLE (Type "debug" to toggle) ---';
+title.style.cssText='color:#888;font-size:11px;';
+const closeBtn=document.createElement('button');
+closeBtn.type='button';
+closeBtn.textContent='x';
+closeBtn.style.cssText='background:none;border:none;color:#888;font-family:monospace;font-size:13px;cursor:pointer;padding:0 4px;line-height:1;';
+closeBtn.onclick=()=>{debugDiv.style.display='none';};
+headerRow.appendChild(title);headerRow.appendChild(closeBtn);
+
+const logArea = document.createElement('pre');
+logArea.tabIndex = 0;
+logArea.style.cssText = `
+    margin:0;
+    white-space:pre-wrap;
+    word-break:break-all;
+    flex-grow:1;
+    overflow-y:auto;
+    -webkit-user-select:text;
+    user-select:text;
+    cursor:text;
+`;
+  // Allow Ctrl+C / Cmd+C to copy selected debug-log text
+// without letting GameMaker consume the keyboard event.
+//
+// This only runs when:
+//   1. the console input is NOT active, and
+//   2. the current selection is inside logArea.
+//
+// Therefore it cannot interfere with the working command input.
+window.addEventListener('keydown', function (e) {
+    const isCopy =
+        (e.ctrlKey || e.metaKey) &&
+        e.key &&
+        e.key.toLowerCase() === 'c';
+
+    if (!isCopy) return;
+
+    // Never interfere with the command input.
+    if (document.activeElement === cmdInput) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const anchor = selection.anchorNode;
+    const focus = selection.focusNode;
+
+    const selectionIsInLog =
+        (anchor && logArea.contains(anchor)) ||
+        (focus && logArea.contains(focus));
+
+    if (!selectionIsInLog) return;
+
+    // IMPORTANT: don't preventDefault().
+    // We want the browser's normal copy operation to happen.
+    //
+    // We only stop the event from continuing to GameMaker.
+    e.stopImmediatePropagation();
+}, true);
+// Let keyboard copy work without GameMaker seeing Ctrl+C.
+logArea.onkeydown = function (e) {
+    if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === 'c'
+    ) {
+        e.stopPropagation();
+    }
+};
+
+// Let the browser perform its normal copy operation.
+logArea.oncopy = function (e) {
+    e.stopPropagation();
+};
+
+logArea.oncut = function (e) {
+    e.stopPropagation();
+};
+const inputRow=document.createElement('div');
+inputRow.style.cssText='display:flex;margin-top:6px;flex-shrink:0;';
+const prompt=document.createElement('span');prompt.textContent='> ';
+inputRow.appendChild(prompt);inputRow.appendChild(cmdInput);
+debugDiv.appendChild(headerRow);debugDiv.appendChild(logArea);debugDiv.appendChild(inputRow);
+
+const appendDebugDiv=()=>{
+    if(document.body){document.body.appendChild(debugDiv);}else{document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(debugDiv),{once:true});}
+};
+appendDebugDiv();
+
+['copy','cut','paste','mousedown','mouseup','click','contextmenu','selectstart'].forEach(evt=>{
+    debugDiv.addEventListener(evt,e=>e.stopPropagation());
+});
+
+const logNodes=[];
+function print(msg,color='#00ff00'){
+    const line=document.createElement('div');
+    line.style.color=color;
+    line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;
+    logArea.appendChild(line);
+    logNodes.push(line);
+    while(logNodes.length>MAX_LOG_LINES)logNodes.shift().remove();
+    logArea.scrollTop=logArea.scrollHeight;
+}
+
+const oldLog=console.log.bind(console),oldErr=console.error.bind(console),oldWarn=console.warn.bind(console);
+console.log=(...a)=>{oldLog(...a);print(a.join(' '));};
+console.error=(...a)=>{oldErr(...a);print(a.join(' '),'#ff4444');};
+console.warn=(...a)=>{oldWarn(...a);print(a.join(' '),'#ffff44');};
+
+window.addEventListener('error',e=>{print(`CRASH ERROR: ${e.message} at ${e.filename}:${e.lineno}`,'#ff0000');});
+window.addEventListener('unhandledrejection',e=>{print(`BLOCKED/FAILED PROMISE: ${e.reason}`,'#ffaa00');});
+
+// Keep this as an onkeydown property: the global addEventListener wrapper above
+// does not wrap it, which is important for this GameMaker runtime.
+cmdInput.onkeydown=function(e){
+    e.stopPropagation();
+    if(e.key==='Enter'){
+        const code=cmdInput.value;
+        if(!code.trim())return;
+        print(`> ${code}`,'#ffffff');
+        cmdInput.value='';
+        try{const res=eval(code);print(`= ${res}`,'#66ffff');}
+        catch(err){print(`E: ${err.message}`,'#ff4444');}
+    }
+};
+
+let keyBuffer='';
+window.addEventListener('keydown',e=>{
+    if(e.key&&e.key.length===1&&document.activeElement!==cmdInput){
+        keyBuffer+=e.key.toLowerCase();
+        const maxSecretLength=Math.max(SECRET_WORD.length,MOD_TRIGGER_WORD.length);
+        if(keyBuffer.length>maxSecretLength)keyBuffer=keyBuffer.slice(-maxSecretLength);
+        if(keyBuffer===SECRET_WORD){
+            const isHidden=debugDiv.style.display==='none';
+            if(isHidden){debugDiv.style.display='flex';setTimeout(()=>cmdInput.focus(),50);}else{debugDiv.style.display='none';}
+            keyBuffer='';
+            return;
+        }
+        if(keyBuffer.endsWith(MOD_TRIGGER_WORD)){
+            if(typeof window.GM_MOD_MENU_OPEN==='function'){
+                try { window.GM_MOD_MENU_OPEN(); } catch(err) { print(`[Mod Manager] ${err.message}`,'#ff4444'); }
+            }
+            keyBuffer='';
+            e.stopImmediatePropagation();
+        }
+    }
+    if(document.activeElement===cmdInput&&e.target!==cmdInput)e.stopImmediatePropagation();
+},true);
+
+print('Debug Console & Input Fix Active.');
+})();
+</script>
+  
+    <script>
+    (function() {
+        // =====================================================================
+        // LARGE OGG WASM HEAP MEMORY FIX & NATIVE HTML5 AUDIO BYPASS
+        // =====================================================================
+        // OGG files at or above this size are played by HTML5 Audio instead of
+        // being decoded into GameMaker WebAssembly memory.
+        const LARGE_OGG_THRESHOLD = 10 * 1024 * 1024; // 10 MiB
+
+        // 1-second valid silent OGG Vorbis buffer
+        const SILENT_OGG_B64 = "T2dnUwACAAAAAAAAAABVD34AAAAAAACTh3YCAXZvcmJpczAAAAAAV2ViT3BlbkZvbnRGaWxlcwAAAAAAMzg0AAAAAAN2b3JiaXMsAAAAYXJ0aXN0PUF1ZGFjaXR5AAAAAG9nZ1ZvcmJpc0NvZGVjAEEA4ABEEACg0ABpA8CA";
+
+        function createSilentOggBlob() {
+            const binary = atob(SILENT_OGG_B64);
+            const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+            return new Blob([bytes], { type: 'audio/ogg' });
+        }
+
+        const SILENT_OGG_BLOB = createSilentOggBlob();
+        const NATIVE_AUDIO_PATTERNS = ['insaneintherain'];
+
+        let bgmAudioIntro = null;
+        let bgmAudioLoop = null;
+
+        function playNativeAudio(url, fileName) {
+            try {
+                if (fileName.includes('insaneintherain_intro')) {
+                    if (bgmAudioIntro) bgmAudioIntro.pause();
+                    if (bgmAudioLoop) bgmAudioLoop.pause();
+
+                    bgmAudioIntro = new Audio(url);
+                    bgmAudioIntro.volume = 0.8;
+                    bgmAudioIntro.play().catch(e => console.warn('[Audio Patch] Autoplay blocked:', e));
+
+                    bgmAudioIntro.onended = () => {
+                        const loopUrl = url.replace('insaneintherain_intro', 'insaneintherain_loop');
+                        bgmAudioLoop = new Audio(loopUrl);
+                        bgmAudioLoop.loop = true;
+                        bgmAudioLoop.volume = 0.8;
+                        bgmAudioLoop.play().catch(e => console.warn('[Audio Patch] Loop autoplay blocked:', e));
+                    };
+                } else if (fileName.includes('insaneintherain_loop') && !bgmAudioIntro) {
+                    if (bgmAudioLoop) bgmAudioLoop.pause();
+                    bgmAudioLoop = new Audio(url);
+                    bgmAudioLoop.loop = true;
+                    bgmAudioLoop.volume = 0.8;
+                    bgmAudioLoop.play().catch(e => console.warn('[Audio Patch] Loop autoplay blocked:', e));
+                }
+            } catch (err) {
+                console.error('[Audio Patch] Native audio error:', err);
+            }
+        }
+
+        function playNativeLargeOgg(url, fileName) {
+            if (NATIVE_AUDIO_PATTERNS.some(pattern => fileName.includes(pattern))) {
+                playNativeAudio(url, fileName);
+                return;
+            }
+
+            try {
+                const audio = new Audio(url);
+                audio.preload = 'auto';
+                audio.volume = 0.8;
+                audio.play().catch(e => console.warn('[Audio Patch] Large OGG autoplay blocked:', e));
+            } catch (err) {
+                console.error('[Audio Patch] Large OGG native playback error:', err);
+            }
+        }
+
+        // Synthetic responses are explicitly marked so future fetch layers can identify them.
+        // The cache layer below also excludes OGG files entirely.
+        function createSilentOggResponse() {
+            return new Response(SILENT_OGG_BLOB, {
+                status: 200,
+                statusText: 'OK',
+                headers: {
+                    'Content-Type': 'audio/ogg',
+                    'Content-Length': SILENT_OGG_BLOB.size.toString(),
+                    'X-GM-Silent-OGG': '1'
+                }
+            });
+        }
+
+        const rawFetch = window.fetch;
+        window.fetch = async function(input, init) {
+            const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+            const fileName = url.split('/').pop().split('?')[0];
+            const isOgg = /\.ogg$/i.test(fileName);
+            const isKnownLargeAudio = NATIVE_AUDIO_PATTERNS.some(pattern => fileName.includes(pattern));
+
+            if (isOgg && isKnownLargeAudio) {
+                playNativeLargeOgg(url, fileName);
+                return createSilentOggResponse();
+            }
+
+            if (isOgg) {
+                const response = await rawFetch.apply(this, arguments);
+                const contentLength = Number(response.headers.get('content-length'));
+
+                if (response.ok && contentLength >= LARGE_OGG_THRESHOLD) {
+                    if (response.body) response.body.cancel().catch(() => {});
+                    playNativeLargeOgg(url, fileName);
+                return createSilentOggResponse();
+                }
+
+                return response;
+            }
+
+            return rawFetch.apply(this, arguments);
+        };
+
+        console.log(`[Audio Memory Patch] Large OGG safety patch initialized (${LARGE_OGG_THRESHOLD / 1048576} MiB threshold; native audio + cache bypass enabled).`);
+    })();
+    </script>
+    <script>
+    (function() {
+        // -------------------------------------------------------------------------
+        // A. WebGL Shader Auto-Patcher (GLSL ES 1.0 compatibility)
+        // -------------------------------------------------------------------------
+        function patchGLSL(source) {
+            if (!source || typeof source !== 'string' || !source.includes('for')) return source;
+
+            let patched = source;
+            let totalMatches = 0;
+
+            // Strict '<' dynamic-loop matcher intentionally excludes '<=' so
+            // inclusive loops can be handled by their dedicated patches below.
+
+            function applyPatch(label, regex, replacement) {
+                let count = 0;
+                patched = patched.replace(regex, function() {
+                    count++;
+                    return replacement.apply(null, arguments);
+                });
+                if (count) {
+                    totalMatches += count;
+                }
+            }
+
+            // The previous patch inserted a new opening brace while leaving the
+            // shader's original opening brace behind. Consume the original brace
+            // here so transformed loops remain valid GLSL ES 1.0.
+
+            // Dynamic start/limit/step loop, e.g. corner.y -> u_Uvs.w.
+            applyPatch(
+                'dynamic loop',
+                /for\s*\(\s*float\s+(\w+)\s*=\s*([^;]+?)\s*;\s*\1\s*<\s*(?!\=)([^;]+?)\s*;\s*\1\s*\+=\s*([^\)]+?)\s*\)\s*\{/g,
+                function(_, varName, startExpr, limitExpr, stepExpr) {
+                    return `for (int _gmStep_${varName} = 0; _gmStep_${varName} < 512; ++_gmStep_${varName}) { float ${varName} = ${startExpr} + float(_gmStep_${varName}) * (${stepExpr}); if (${varName} >= ${limitExpr}) break;`;
+                }
+            );
+
+            // Zero-start inclusive loop.
+            applyPatch(
+                'zero-start <= loop',
+                /for\s*\(\s*float\s+(\w+)\s*=\s*0(?:\.0+)?\s*;\s*\1\s*<=\s*([a-zA-Z_][\w.]*)\s*;\s*\1\s*\+=\s*1(?:\.0+)?\s*\)\s*\{/g,
+                function(_, varName, limitExpr) {
+                    return `for (int _gmStep_${varName} = 0; _gmStep_${varName} < 129; ++_gmStep_${varName}) { float ${varName} = float(_gmStep_${varName}); if (${varName} > ${limitExpr}) break;`;
+                }
+            );
+
+            // Zero-start exclusive loop.
+            applyPatch(
+                'zero-start < loop',
+                /for\s*\(\s*float\s+(\w+)\s*=\s*0(?:\.0+)?\s*;\s*\1\s*<\s*([a-zA-Z_][\w.]*)\s*;\s*\1\s*(?:\+\+|\+=\s*1(?:\.0+)?)\s*\)\s*\{/g,
+                function(_, varName, limitExpr) {
+                    return `for (int _gmStep_${varName} = 0; _gmStep_${varName} < 256; ++_gmStep_${varName}) { float ${varName} = float(_gmStep_${varName}); if (${varName} >= ${limitExpr}) break;`;
+                }
+            );
+
+            // Symmetric negative/positive blur loop.
+            applyPatch(
+                'symmetric blur loop',
+                /for\s*\(\s*float\s+(\w+)\s*=\s*-([a-zA-Z_][\w.]*)\s*;\s*\1\s*<=\s*\2\s*;\s*\1\s*\+=\s*1(?:\.0+)?\s*\)\s*\{/g,
+                function(_, varName, radiusExpr) {
+                    return `for (int _gmStep_${varName} = 0; _gmStep_${varName} < 129; ++_gmStep_${varName}) { float ${varName} = -64.0 + float(_gmStep_${varName}); if (${varName} < -(${radiusExpr})) continue; if (${varName} > ${radiusExpr}) break;`;
+                }
+            );
+
+
+            return patched;
+        }
+
+        const patchWebGLContext = (ctx) => {
+            if (!ctx || ctx._shaderPatched) return;
+            ctx._shaderPatched = true;
+    
+            const origShaderSource = ctx.shaderSource;
+            const shaderSources = new WeakMap();
+            ctx.shaderSource = function(shader, source) {
+                const patchedSource = patchGLSL(source);
+                try { shaderSources.set(shader, patchedSource); } catch (_) {}
+                return origShaderSource.call(this, shader, patchedSource);
+            };
+
+            const origCompileShader = ctx.compileShader;
+            ctx.compileShader = function(shader) {
+                const result = origCompileShader.apply(this, arguments);
+                try {
+                    if (!this.getShaderParameter(shader, this.COMPILE_STATUS)) {
+                        const info = this.getShaderInfoLog(shader) || 'unknown shader compile error';
+                        const sourceText = shaderSources.get(shader);
+                        console.error('[Shader Patch] Shader compilation FAILED:', info);
+                        if (sourceText) console.error('[Shader Patch] Patched shader source follows:\n' + sourceText);
+                    }
+                } catch (err) {
+                    console.warn('[Shader Patch] Could not inspect shader compile result:', err);
+                }
+                return result;
+            };
+
+            const origTexImage2D = ctx.texImage2D;
+            ctx.texImage2D = function(...args) {
+                try {
+                    const src = args[args.length - 1];
+                    if (src && src instanceof HTMLVideoElement) {
+                        if (src.error || src.readyState < 2) return; // Prevent WebGL crash on invalid video frame
+                    }
+                    return origTexImage2D.apply(this, args);
+                } catch (err) {
+                    console.warn('[WebGL Patch] Prevented texImage2D video crash:', err);
+                }
+            };
+        };
+    
+        if (window.WebGLRenderingContext) {
+            const origGetContext = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function(type, ...args) {
+                const ctx = origGetContext.call(this, type, ...args);
+                if (ctx && (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2')) {
+                    patchWebGLContext(ctx);
+                }
+                return ctx;
+            };
+        }
+    
+        // -------------------------------------------------------------------------
+        // B. Cutscene Video Protection (CORS, Error Handling, Autoplay Recovery)
+        // -------------------------------------------------------------------------
+        const pendingVideoPlays = new Set();
+        const erroredVideos = new WeakSet();
+
+        const origCreateElement = document.createElement;
+        document.createElement = function(tagName, ...args) {
+            const elem = origCreateElement.call(this, tagName, ...args);
+            if (typeof tagName === 'string' && tagName.toLowerCase() === 'video') {
+                elem.crossOrigin = 'anonymous';
+
+                elem.addEventListener('error', () => {
+                    if (erroredVideos.has(elem)) return;
+                    erroredVideos.add(elem);
+
+                    console.warn('[Video System] Video error:', elem.src, elem.error?.message || 'unknown media error');
+
+                    // Preserve the original GameMaker recovery behavior, but dispatch it only once.
+                    try { elem.dispatchEvent(new Event('ended')); } catch (_) {}
+                });
+            }
+            return elem;
+        };
+
+        const origPlay = HTMLVideoElement.prototype.play;
+        HTMLVideoElement.prototype.play = function() {
+            const video = this;
+            const promise = origPlay.apply(video, arguments);
+
+            if (promise && typeof promise.then === 'function') {
+                promise.then(() => {
+                    pendingVideoPlays.delete(video);
+                }).catch(err => {
+                    // Only remember an actually blocked/interrupted play attempt.
+                    // We retry it after a real user gesture rather than starting every paused video.
+                    if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
+                        pendingVideoPlays.add(video);
+                    }
+                    console.warn('[Video System] Video play blocked/interrupted:', err?.message || err);
+                });
+            }
+
+            return promise;
+        };
+
+        // Retry only videos that previously attempted to play and were blocked.
+        const unlockMedia = () => {
+            for (const video of pendingVideoPlays) {
+                if (!video.isConnected || video.ended || video.error) {
+                    pendingVideoPlays.delete(video);
+                    continue;
+                }
+
+                const retry = video.play();
+                if (!retry || typeof retry.catch !== 'function') {
+                    pendingVideoPlays.delete(video);
+                    continue;
+                }
+
+                retry.then(() => pendingVideoPlays.delete(video))
+                     .catch(() => {});
+            }
+
+            window.removeEventListener('click', unlockMedia);
+            window.removeEventListener('keydown', unlockMedia);
+        };
+
+        window.addEventListener('click', unlockMedia, { once: true });
+        window.addEventListener('keydown', unlockMedia, { once: true });
+    
+        console.log('[Engine Patch] WebGL Shader Fix & Cutscene Patch Active.');
+    })();
+    </script>
     <body oncontextmenu="return false;">
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -9,7 +509,450 @@
     <title>DELTARUNE</title>
     <meta name="title" content="DELTARUNE" />
     <meta name="description" content="Unofficial Deltarune WebPort" />
-    <base href="https://mollomm1.github.io/test/">
+    <base href="https://cdn.jsdelivr.net/gh/moneydude242/test@main/">
+    <script>
+// Universal Cache-First Interceptor & Live Download Progress Tracker
+    (function() {
+        const CACHE_NAME = 'deltarune-universal-cache-v1';
+        const RAW_GITHUB_BASE = 'https://raw.githubusercontent.com/moneydude242/test/main/';
+        const JSDELIVR_BASE = 'https://cdn.jsdelivr.net/gh/moneydude242/test@main/';
+        const originalFetch = window.fetch.bind(window);
+        const activeDownloads = new Map();
+
+        // Remove OGG entries left by older cache versions so stale silent
+        // placeholders cannot be served by a previously populated cache.
+        purgeCachedOggEntries();
+
+        // Expose the asset bases so the later chapter resolver can reuse the
+        // same routing constants instead of maintaining duplicate copies.
+        window.GM_RAW_GITHUB_BASE = RAW_GITHUB_BASE;
+        window.GM_JSDELIVR_BASE = JSDELIVR_BASE;
+
+        function createProgressUI() {
+            let box = document.getElementById('screen-download-progress');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'screen-download-progress';
+                box.style.cssText = `
+                    position: fixed; bottom: 20px; right: 20px;
+                    background: rgba(0, 0, 0, 0.9); color: #00ffcc;
+                    border: 2px solid #00ffcc; padding: 12px 18px;
+                    font-family: monospace, sans-serif; font-size: 13px;
+                    border-radius: 6px; z-index: 1000000;
+                    box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+                    display: none; pointer-events: none; min-width: 240px;
+                `;
+                (document.body || document.documentElement).appendChild(box);
+            }
+            return box;
+        }
+
+        function updateProgressUI(urlKey, fileName, loaded, total) {
+            const box = createProgressUI();
+            if (!box) return;
+
+            if (total > 0 && loaded >= total) {
+                activeDownloads.delete(urlKey);
+            } else {
+                activeDownloads.set(urlKey, { fileName, loaded, total });
+            }
+
+            if (activeDownloads.size === 0) {
+                box.innerHTML = '<div><b>Status:</b> All downloads finished!</div>';
+                setTimeout(() => {
+                    if (activeDownloads.size === 0) box.style.display = 'none';
+                }, 2000);
+                return;
+            }
+
+            box.style.display = 'block';
+            let html = '<div style="margin-bottom:6px;border-bottom:1px solid #00ffcc;padding-bottom:4px;"><b>Downloading Assets...</b></div>';
+            activeDownloads.forEach(info => {
+                const loadedMB = (info.loaded / (1024 * 1024)).toFixed(1);
+                if (info.total > 0) {
+                    const totalMB = (info.total / (1024 * 1024)).toFixed(1);
+                    const percent = Math.round((info.loaded / info.total) * 100);
+                    html += `<div><b>${info.fileName}:</b> ${loadedMB} MB / ${totalMB} MB (${percent}%)</div>`;
+                } else {
+                    html += `<div><b>${info.fileName}:</b> ${loadedMB} MB downloaded</div>`;
+                }
+            });
+            box.innerHTML = html;
+        }
+
+        function getMimeType(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            switch (ext) {
+                case 'js': return 'application/javascript';
+                case 'wasm': return 'application/wasm';
+                case 'json': return 'application/json';
+                case 'ogg': return 'audio/ogg';
+                case 'mp4': return 'video/mp4';
+                case 'png': return 'image/png';
+                case 'jpg':
+                case 'jpeg': return 'image/jpeg';
+                default: return 'application/octet-stream';
+            }
+        }
+
+        function extractRelativePath(rawUrl) {
+            if (!rawUrl || typeof rawUrl !== 'string') return '';
+
+            let path = rawUrl;
+            if (rawUrl.startsWith(JSDELIVR_BASE)) {
+                path = rawUrl.slice(JSDELIVR_BASE.length);
+            } else if (rawUrl.startsWith(RAW_GITHUB_BASE)) {
+                path = rawUrl.slice(RAW_GITHUB_BASE.length);
+            } else if (/^[a-z][a-z0-9+.-]*:/i.test(rawUrl)) {
+                // Do not hijack unrelated absolute URLs (blob:, data:, other CDNs, etc.).
+                return '';
+            }
+
+            return path.replace(/^\/+/, '').split(/[?#]/)[0];
+        }
+
+        function resolveAssetUrl(rawUrl) {
+            const resolver = window.GM_RESOLVE_ASSET_URL;
+            return typeof resolver === 'function' ? resolver(rawUrl) : rawUrl;
+        }
+
+        function isManagedAssetUrl(rawUrl) {
+            if (!rawUrl || typeof rawUrl !== 'string') return false;
+            if (!/^[a-z][a-z0-9+.-]*:/i.test(rawUrl)) return true;
+            return rawUrl.startsWith(JSDELIVR_BASE) || rawUrl.startsWith(RAW_GITHUB_BASE);
+        }
+
+        function isOggPath(relativePath) {
+            return /\.ogg$/i.test(String(relativePath).split(/[?#]/)[0]);
+        }
+
+        async function purgeCachedOggEntries() {
+            if (!('caches' in window)) return;
+            try {
+                const cache = await caches.open(CACHE_NAME);
+                const requests = await cache.keys();
+                let removed = 0;
+                for (const request of requests) {
+                    const requestUrl = request && request.url ? request.url : '';
+                    if (isOggPath(requestUrl) && await cache.delete(request)) removed++;
+                }
+                console.log(`[Cache Patch] OGG cache cleanup complete: removed ${removed} cached OGG entr${removed === 1 ? 'y' : 'ies'}.`);
+            } catch (e) {
+                console.warn('[Cache Patch] OGG cache cleanup failed:', e);
+            }
+        }
+
+        async function fetchAndCacheGithubAsset(relativePath, init) {
+            const fileName = relativePath.split('/').pop();
+            const targetUrl = RAW_GITHUB_BASE + relativePath;
+
+            // Never cache OGG files. Large OGG requests are replaced by a tiny
+            // silent response after native playback starts; caching that response
+            // would prevent the audio patch from running on subsequent requests.
+            if (isOggPath(relativePath)) {
+                return originalFetch(targetUrl, init);
+            }
+            let cache = null;
+
+            if ('caches' in window) {
+                try {
+                    cache = await caches.open(CACHE_NAME);
+                    const cachedResponse = await cache.match(targetUrl);
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                } catch (e) {
+                    console.warn('Cache lookup warning:', e);
+                }
+            }
+
+            const response = await originalFetch(targetUrl, init);
+            if (!response.ok || !response.body) return response;
+
+            const contentLength = response.headers.get('content-length');
+            const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+            let loadedBytes = 0;
+            const reader = response.body.getReader();
+            const chunks = [];
+
+            updateProgressUI(targetUrl, fileName, 0, totalBytes);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                loadedBytes += value.length;
+                updateProgressUI(targetUrl, fileName, loadedBytes, totalBytes);
+            }
+
+            const finalBytes = totalBytes || loadedBytes;
+            updateProgressUI(targetUrl, fileName, finalBytes, finalBytes);
+
+            const mimeType = getMimeType(fileName);
+            const blob = new Blob(chunks, { type: mimeType });
+            const synthesizedResponse = new Response(blob, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: {
+                    'Content-Type': mimeType,
+                    'Content-Length': String(blob.size)
+                }
+            });
+
+            if (cache) {
+                try {
+                    await cache.put(targetUrl, synthesizedResponse.clone());
+                } catch (e) {
+                    console.warn('Cache write failed:', e);
+                }
+            }
+
+            return synthesizedResponse;
+        }
+
+        console.log('[Cache Patch] Universal cache initialized; OGG requests excluded.');
+
+        window.fetch = async function(input, init) {
+            const rawUrl = typeof input === 'string'
+                ? input
+                : (input instanceof Request ? input.url : '');
+            const resolvedUrl = resolveAssetUrl(rawUrl);
+
+            // Leave unrelated browser/network requests completely untouched.
+            if (!isManagedAssetUrl(resolvedUrl)) {
+                return originalFetch(input, init);
+            }
+
+            // Keep executable/loader WebAssembly on the native fetch path.
+            // Emscripten and xdelta3-wasm are stricter about the Response they
+            // receive than ordinary asset consumers. Synthetic cache responses
+            // can trigger Chromium's 'HTTP status code is not ok' WebAssembly
+            // compile error even when the underlying file is valid.
+            const managedPath = extractRelativePath(resolvedUrl);
+            if (managedPath && (/(^|\/)runner\.wasm$/i.test(managedPath) ||
+                /(?:^|\/)df58e7ef369c5c18\.wasm$/i.test(managedPath))) {
+                console.log('[WASM Loader] Bypassing synthetic cache response for:', resolvedUrl);
+                return originalFetch(resolvedUrl, init);
+            }
+
+            const relativePath = managedPath;
+            if (!relativePath) return originalFetch(input, init);
+
+            // Mod overrides sit in front of the normal asset cache.  A mod file
+            // therefore wins without changing the chapter manifests or GitHub files.
+            try {
+                if (typeof window.GM_MOD_GET_RESPONSE === 'function') {
+                    const modResponse = window.GM_MOD_GET_RESPONSE(relativePath);
+                    if (modResponse) return modResponse;
+                }
+            } catch (modError) {
+                console.warn('[Mod Manager] Override lookup failed:', modError);
+            }
+
+            try {
+                return await fetchAndCacheGithubAsset(relativePath, init);
+            } catch (err) {
+                console.error(`[Fetch Error] Download failed for ${relativePath}:`, err);
+                throw err;
+            }
+        };
+    })();
+    </script>
+    <script>
+    (function() {
+        const SAVE_PREFIX = "DELTARUNE_SAVE_";
+        const localStorageSignatures = new Map();
+
+        function bytesToBase64(bytes) {
+            let binary = "";
+            const chunkSize = 0x8000;
+            for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                const end = Math.min(offset + chunkSize, bytes.length);
+                let chunk = "";
+                for (let i = offset; i < end; i++) chunk += String.fromCharCode(bytes[i]);
+                binary += chunk;
+            }
+            return btoa(binary);
+        }
+
+        function hashBytes(bytes) {
+            let hash = 2166136261;
+            for (let i = 0; i < bytes.length; i++) {
+                hash ^= bytes[i];
+                hash = Math.imul(hash, 16777619) >>> 0;
+            }
+            return `${bytes.length}:${hash}`;
+        }
+    
+        function syncToLocalStorage() {
+            if (typeof FS === "undefined") return;
+            try {
+                const dirs = ["/", "/_savedata"];
+                dirs.forEach(dir => {
+                    if (!FS.analyzePath(dir).exists) return;
+                    FS.readdir(dir).forEach(file => {
+                        if (file === "." || file === "..") return;
+                        const filePath = (dir === "/" ? "/" : dir + "/") + file;
+                        try {
+                            const stat = FS.stat(filePath);
+                            if (!FS.isFile(stat.mode)) return;
+                            const data = FS.readFile(filePath);
+                            const signature = hashBytes(data);
+                            const storageKey = SAVE_PREFIX + file;
+                            if (localStorageSignatures.get(storageKey) === signature && localStorage.getItem(storageKey) !== null) {
+                                return;
+                            }
+                            localStorage.setItem(storageKey, bytesToBase64(data));
+                            localStorageSignatures.set(storageKey, signature);
+                            console.log("[LocalStorage Backup] Updated:", file);
+                        } catch (e) {}
+                    });
+                });
+            } catch(err) {
+                console.warn("[LocalStorage Backup] Sync warning:", err);
+            }
+        }
+    
+        function savePathForBackup(fileName) {
+            const name = String(fileName).replace(/^\/_savedata\//, '').replace(/^\//, '');
+            return `/_savedata/${name}`;
+        }
+
+        function restoreFromLocalStorage() {
+            if (typeof FS === "undefined") return;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key || !key.startsWith(SAVE_PREFIX)) continue;
+
+                    const fileName = key.slice(SAVE_PREFIX.length);
+                    const b64 = localStorage.getItem(key);
+                    if (!b64 || !fileName) continue;
+
+                    const binary = atob(b64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let j = 0; j < binary.length; j++) {
+                        bytes[j] = binary.charCodeAt(j);
+                    }
+
+                    const fullPath = savePathForBackup(fileName);
+                    const parentDir = fullPath.slice(0, fullPath.lastIndexOf('/')) || '/';
+                    if (parentDir !== '/' && !FS.analyzePath(parentDir).exists) {
+                        FS.mkdirTree(parentDir);
+                    }
+
+                    FS.writeFile(fullPath, bytes);
+
+                    // Remove an older incorrectly imported root-level copy so it
+                    // cannot shadow the authoritative /_savedata version.
+                    const stalePath = `/${fileName}`;
+                    if (stalePath !== fullPath) {
+                        try {
+                            if (FS.analyzePath(stalePath).exists) FS.unlink(stalePath);
+                        } catch (_) {}
+                    }
+
+                    console.log("[LocalStorage Backup] Restored:", fileName, "->", fullPath);
+                }
+            } catch(err) {
+                console.warn("[LocalStorage Backup] Restore warning:", err);
+            }
+        }
+    
+        // Attach hooks to Emscripten Module
+        window.Module = window.Module || {};
+        
+        const origPostRun = window.Module.postRun || [];
+        window.Module.postRun = Array.isArray(origPostRun) ? origPostRun : [origPostRun];
+    
+        window.Module.postRun.push(function() {
+            // Expose a tiny filesystem bridge to the Save Manager.
+            // In this runner, FS is available inside the Emscripten postRun
+            // callback but is not exposed globally as window.FS.
+            window.GM_SAVE_FS = {
+                list: function() {
+                    const files = [];
+                    for (const dir of ['/', '/_savedata']) {
+                        try {
+                            if (!FS.analyzePath(dir).exists) continue;
+                            for (const entry of FS.readdir(dir)) {
+                                if (entry === '.' || entry === '..') continue;
+                                const fullPath = dir === '/' ? `/${entry}` : `${dir}/${entry}`;
+                                try {
+                                    const stat = FS.stat(fullPath);
+                                    if (!FS.isFile(stat.mode)) continue;
+                                    files.push({
+                                        path: fullPath,
+                                        contents: new Uint8Array(FS.readFile(fullPath))
+                                    });
+                                } catch (_) {}
+                            }
+                        } catch (_) {}
+                    }
+                    return files;
+                },
+                read: function(path) {
+                    return new Uint8Array(FS.readFile(path));
+                },
+                write: function(path, contents) {
+                    const normalized = String(path);
+                    const slash = normalized.lastIndexOf('/');
+                    const dir = slash > 0 ? normalized.slice(0, slash) : '/';
+                    const name = normalized.slice(slash + 1);
+                    if (dir !== '/' && !FS.analyzePath(dir).exists) {
+                        FS.mkdir(dir);
+                    }
+                    FS.writeFile(normalized, contents);
+                },
+                remove: function(path) {
+                    try { FS.unlink(path); } catch (_) {}
+                }
+            };
+
+            // 1. Restore saves immediately on boot from LocalStorage
+            restoreFromLocalStorage();
+    
+            // 2. Intercept syncfs and protect against closed IndexedDB connections
+            if (typeof FS !== "undefined" && FS.syncfs) {
+                const origSyncfs = FS.syncfs;
+                FS.syncfs = function(populate, callback) {
+                    const done = typeof callback === 'function' ? callback : function(){};
+    
+                    if (populate) {
+                        restoreFromLocalStorage();
+                        try {
+                            origSyncfs.call(FS, populate, function(err) {
+                                if (err) {
+                                    console.warn("[Save System] IDB populate warning (using LocalStorage):", err);
+                                }
+                                done(null); // Report success so Save Manager doesn't crash
+                            });
+                        } catch(e) {
+                            console.warn("[Save System] IDB closed during populate (LocalStorage active):", e);
+                            done(null); // Bypass closed connection error
+                        }
+                    } else {
+                        // Sync to LocalStorage FIRST before IndexedDB can throw
+                        syncToLocalStorage();
+                        try {
+                            origSyncfs.call(FS, populate, function(err) {
+                                if (err) {
+                                    console.warn("[Save System] IDB save warning (LocalStorage backed up):", err);
+                                }
+                                done(null); // Report success so game saves smoothly
+                            });
+                        } catch(e) {
+                            console.warn("[Save System] IDB closed during save (LocalStorage backed up):", e);
+                            done(null); // Bypass closed connection error
+                        }
+                    }
+                };
+            }
+    
+            // 3. Backup save files automatically every 5 seconds
+            setInterval(syncToLocalStorage, 5000);
+        });
+    })();
+    </script>
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="DELTARUNE" />
@@ -514,10 +1457,1401 @@ progress[value]::-webkit-progress-value {
 .nipple.back {
     background-color: rgba(128, 128, 128, 0.5) !important;
 }
+
+#gm-mod-debug{margin-top:14px;padding:12px;border:1px solid #7a5a00;background:rgba(50,35,0,.35);border-radius:8px}
+#gm-mod-debug h3{margin:0 0 8px;font-size:15px}
+.gm-debug-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+#gm-mod-debug select{background:#111;color:#eee;border:1px solid #555;border-radius:6px;padding:6px;min-width:190px}
+#gm-mod-debug pre{max-height:260px;overflow:auto;background:#080808;border:1px solid #333;padding:8px;border-radius:6px;white-space:pre-wrap}
 </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-        <style>
+    <script>
+    (function(){
+        'use strict';
+
+        const MOD_FILES=new Map();
+        const MOD_FILE_OWNERS=new Map();
+        const MODS=[];
+        let loaded=false;
+        let modDBPromise=null;
+        const XDELTA_WORKER_URL='https://cdn.jsdelivr.net/gh/moneydude242/test@main/xdelta3.worker.js';
+        const XDELTA_JS_URL='https://cdn.jsdelivr.net/gh/moneydude242/test@main/xdelta3.js';
+        const XDELTA_WASM_URL='https://cdn.jsdelivr.net/gh/moneydude242/test@main/xdelta3.wasm';
+        const SEVENZIP_JS_URL='https://cdn.jsdelivr.net/npm/7z-wasm@1.2.0/7zz.umd.js';
+        const SEVENZIP_WASM_URL='https://cdn.jsdelivr.net/npm/7z-wasm@1.2.0/7zz.wasm';
+        let sevenZipFactoryPromise=null;
+        let xdeltaWorkerSourcePromise=null;
+        let xdeltaWasmPromise=null;
+
+        // ---- Mod database / shared helpers -------------------------------------------------
+        const MOD_DB_NAME='deltarune_webport_mods';
+        const MOD_DB_VERSION=1;
+        const MOD_STORE_NAME='mods';
+        function cleanModPath(path){
+            return String(path||'').replace(/\\/g,'/').replace(/^\.\//,'').replace(/^\/+/, '').replace(/\/+/g,'/').trim();
+        }
+        function normalizeChapterFromTarget(path){
+            const p=cleanModPath(path);
+            if(!p) return null;
+            const m=p.match(/^chapter(\d+)_windows\//i) || p.match(/^chapter(\d+)\//i);
+            if(m) return String(parseInt(m[1],10));
+            if(/^data\.win$/i.test(p) || /^game\.unx$/i.test(p)) return '0';
+            return null;
+        }
+        function escapeHTML(value){
+            return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+        function setStatus(text){
+            const el=document.getElementById('gm-mod-status');
+            if(el) el.textContent=String(text??'');
+        }
+
+        // Known Chapter 5 archive identities verified for this web port.
+        // Keys here are SHA-256 because the mod system already computes SHA-256.
+        const KNOWN_GAME_VERSIONS = {
+            '5': {
+                '5485a622bf8aef28ae3bd89d770e32876cce889da96acfcfea543fcdafa87e5c': {version:'0.0.240', md5:'8e205589ce55a0512ff5666a5cba3d55'},
+                '370dfd141d2955d5a1960122919b16e4092b52ffbb85fda541bc4680c6b3b85': {version:'0.0.253', md5:'9c80e6300e0548d933cc006f3c22760d'}
+            }
+        };
+        function showModNotice(title, message, kind='warn'){
+            const old=document.getElementById('gm-mod-notice');
+            if(old) old.remove();
+            const box=document.createElement('div');
+            box.id='gm-mod-notice';
+            box.className='gm-mod-notice '+(kind==='error'?'error':kind==='ok'?'ok':'warn');
+            box.innerHTML='<div class="gm-mod-notice-title">'+escapeHTML(title)+'</div><div class="gm-mod-notice-body">'+escapeHTML(message)+'</div><button class="gm-mod-notice-close">OK</button>';
+            box.querySelector('button')?.addEventListener('click',()=>box.remove());
+            document.body.appendChild(box);
+        }
+        function knownGameVersion(chapter, hash){
+            const table=KNOWN_GAME_VERSIONS[String(chapter)]||{};
+            const value=table[String(hash||'').toLowerCase()];
+            return value ? `v${value.version}` : null;
+        }
+        function knownGameVersionInfo(chapter, hash){
+            const table=KNOWN_GAME_VERSIONS[String(chapter)]||{};
+            return table[String(hash||'').toLowerCase()]||null;
+        }
+        function normalizeStoredMod(record){
+            if(!record || typeof record!=='object') return null;
+            const zip=record.zip instanceof Uint8Array ? record.zip : (record.zip instanceof ArrayBuffer ? new Uint8Array(record.zip) : (record.zip ? new Uint8Array(record.zip) : null));
+            return {...record, zip, archiveFormat:record.archiveFormat||'zip', archiveName:record.archiveName||record.name||'mod.zip', enabled:record.enabled!==false, patches:Array.isArray(record.patches)?record.patches:[], checksums:Array.isArray(record.checksums)?record.checksums:[], extraFiles:Array.isArray(record.extraFiles)?record.extraFiles:[], lastCompatibility:record.lastCompatibility||null, lastAssetConflicts:Array.isArray(record.lastAssetConflicts)?record.lastAssetConflicts:[]};
+        }
+        async function openModDB(){
+            if(modDBPromise) return modDBPromise;
+            modDBPromise=new Promise((resolve,reject)=>{
+                if(!window.indexedDB){reject(new Error('IndexedDB is unavailable in this browser.'));return;}
+                const req=indexedDB.open(MOD_DB_NAME,MOD_DB_VERSION);
+                req.onerror=()=>reject(req.error||new Error('Unable to open mod database.'));
+                req.onupgradeneeded=()=>{
+                    const db=req.result;
+                    if(!db.objectStoreNames.contains(MOD_STORE_NAME)) db.createObjectStore(MOD_STORE_NAME,{keyPath:'id'});
+                };
+                req.onsuccess=()=>{
+                    const db=req.result;
+                    db.onversionchange=()=>{try{db.close();}catch(_){}};
+                    resolve(db);
+                };
+            });
+            try{return await modDBPromise;}catch(e){modDBPromise=null;throw e;}
+        }
+        async function listStoredMods(){
+            const db=await openModDB();
+            return new Promise((resolve,reject)=>{
+                const tx=db.transaction(MOD_STORE_NAME,'readonly');
+                const req=tx.objectStore(MOD_STORE_NAME).getAll();
+                req.onsuccess=()=>resolve((req.result||[]).map(normalizeStoredMod).filter(Boolean));
+                req.onerror=()=>reject(req.error||new Error('Unable to read mod database.'));
+            });
+        }
+        async function putStoredMod(record){
+            const db=await openModDB();
+            return new Promise((resolve,reject)=>{
+                const tx=db.transaction(MOD_STORE_NAME,'readwrite');
+                tx.objectStore(MOD_STORE_NAME).put({...record, zip:record.zip instanceof Uint8Array ? record.zip : new Uint8Array(record.zip||[])});
+                tx.oncomplete=()=>resolve();
+                tx.onerror=()=>reject(tx.error||new Error('Unable to save mod.'));
+                tx.onabort=()=>reject(tx.error||new Error('Unable to save mod.'));
+            });
+        }
+        async function deleteStoredMod(id){
+            const db=await openModDB();
+            return new Promise((resolve,reject)=>{
+                const tx=db.transaction(MOD_STORE_NAME,'readwrite');
+                tx.objectStore(MOD_STORE_NAME).delete(String(id));
+                tx.oncomplete=()=>resolve();
+                tx.onerror=()=>reject(tx.error||new Error('Unable to delete mod.'));
+                tx.onabort=()=>reject(tx.error||new Error('Unable to delete mod.'));
+            });
+        }
+
+
+        async function getXdeltaWorkerSource(){
+            if(xdeltaWorkerSourcePromise) return xdeltaWorkerSourcePromise;
+            xdeltaWorkerSourcePromise=(async()=>{
+                const [workerResponse, jsResponse]=await Promise.all([
+                    fetch(XDELTA_WORKER_URL,{cache:'no-store'}),
+                    fetch(XDELTA_JS_URL,{cache:'no-store'})
+                ]);
+                if(!workerResponse.ok) throw new Error(`Unable to load xdelta3 worker: HTTP ${workerResponse.status}`);
+                if(!jsResponse.ok) throw new Error(`Unable to load xdelta3.js: HTTP ${jsResponse.status}`);
+                const workerSource=await workerResponse.text();
+                const jsSource=await jsResponse.text();
+
+                // A module Worker created from a file:// page has a null origin.
+                // Do not make it import another cross-origin ES module. Instead,
+                // inline the xdelta module source into the worker as a classic
+                // script and provide the WASM binary explicitly at runtime.
+                let inlineModule=jsSource
+                    .replace(/var _scriptName=import\.meta\.url;/g,'var _scriptName="https://cdn.jsdelivr.net/gh/moneydude242/test@main/xdelta3.js";')
+                    .replace(/new URL\("xdelta3\.wasm",import\.meta\.url\)\.href/g,'""')
+                    .replace(/export default createXdelta3Module;\s*$/,'self.createXdelta3Module=createXdelta3Module;');
+                if(!inlineModule.includes('self.createXdelta3Module=createXdelta3Module')){
+                    throw new Error('Unable to prepare xdelta3.js for inline worker loading.');
+                }
+
+                let inlineWorker=workerSource
+                    .replace(/^import createXdelta3Module from ['\"]\.\/xdelta3\.js['\"]\s*$/m,'')
+                    .replace(/module = await createXdelta3Module\(\)/g,'module = await self.createXdelta3Module({ wasmBinary: event.data.wasmBinary })');
+                if(inlineWorker.includes("from './xdelta3.js'") || inlineWorker.includes('from "./xdelta3.js"')){
+                    throw new Error('xdelta3.worker.js still contains a cross-origin module import.');
+                }
+                return `${inlineModule}\n;${inlineWorker}`;
+            })();
+            try{return await xdeltaWorkerSourcePromise;}
+            catch(error){xdeltaWorkerSourcePromise=null;throw error;}
+        }
+
+        async function getXdeltaWasm(){
+            if(xdeltaWasmPromise) return xdeltaWasmPromise;
+            xdeltaWasmPromise=fetch(XDELTA_WASM_URL,{cache:'no-store'}).then(async response=>{
+                if(!response.ok) throw new Error(`Unable to load xdelta3.wasm: HTTP ${response.status}`);
+                return await response.arrayBuffer();
+            });
+            try{return await xdeltaWasmPromise;}
+            catch(error){xdeltaWasmPromise=null;throw error;}
+        }
+
+        async function createXdeltaWorker(){
+            const [source,wasmBinary]=await Promise.all([getXdeltaWorkerSource(),getXdeltaWasm()]);
+            const workerUrl=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+            let worker;
+            try{
+                // This is now a classic Blob Worker: no cross-origin module import.
+                worker=new Worker(workerUrl);
+            }catch(error){
+                URL.revokeObjectURL(workerUrl);
+                throw error;
+            }
+            worker.__webportBlobUrl=workerUrl;
+            worker.__webportWasmBinary=wasmBinary;
+            return worker;
+        }
+
+        async function decodeXdeltaLarge(patchBytes, sourceBytes, disableChecksum=false){
+            const sourceFile = sourceBytes instanceof Blob
+                ? sourceBytes
+                : new Blob([sourceBytes],{type:'application/octet-stream'});
+            const patchFile = patchBytes instanceof Blob
+                ? patchBytes
+                : new Blob([patchBytes],{type:'application/octet-stream'});
+
+            return createXdeltaWorker().then(worker=>new Promise((resolve,reject)=>{
+                const chunks=[];
+                let settled=false;
+                const finish=(fn,value)=>{
+                    if(settled) return;
+                    settled=true;
+                    try{worker.terminate();}catch(_){}
+                    try{if(worker.__webportBlobUrl) URL.revokeObjectURL(worker.__webportBlobUrl);}catch(_){}
+                    fn(value);
+                };
+                worker.onmessage=(event)=>{
+                    const data=event.data||{};
+                    if(data.final){
+                        if(data.error){
+                            finish(reject,new Error(data.errorMessage||`xdelta3 worker failed (${data.errorCode??'unknown'})`));
+                        }else{
+                            finish(resolve,new Blob(chunks,{type:'application/octet-stream'}));
+                        }
+                        return;
+                    }
+                    if(data.bytes){
+                        chunks.push(data.bytes);
+                    }
+                };
+                worker.onerror=(event)=>{
+                    finish(reject,new Error(`xdelta3 worker failed${event.filename?` at ${event.filename}:${event.lineno||0}:${event.colno||0}`:''}: ${event.message||'unknown worker error'}`));
+                };
+                worker.onmessageerror=()=>{
+                    finish(reject,new Error('xdelta3 worker message could not be decoded.'));
+                };
+                try{
+                    // Do not transfer the cached WASM ArrayBuffer. A transferred ArrayBuffer is detached,
+                    // which breaks subsequent patches in a multi-mod chain. Structured-cloning this small
+                    // (~165 KiB) binary is cheap and keeps the cached copy reusable for the next worker.
+                    worker.postMessage({
+                        command:'start',
+                        sourceFile,
+                        patchFile,
+                        disableChecksum:!!disableChecksum,
+                        wasmBinary: worker.__webportWasmBinary.slice(0)
+                    });
+                }catch(error){
+                    finish(reject,error);
+                }
+            }));
+        }
+
+        async function sha256Hex(bytes){
+            let buffer;
+            if(bytes instanceof Blob){
+                buffer=await bytes.arrayBuffer();
+            }else if(bytes instanceof ArrayBuffer){
+                buffer=bytes;
+            }else if(ArrayBuffer.isView(bytes)){
+                buffer=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+            }else{
+                throw new TypeError('sha256Hex expected an ArrayBuffer, typed array, or Blob.');
+            }
+            const digest=await crypto.subtle.digest('SHA-256',buffer);
+            return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+        }
+
+        function parseDeltamodXML(text, baseDir=''){
+            const patches=[];
+            const source=String(text||'').trim();
+            if(!source) return patches;
+            const parser=new DOMParser();
+            let doc=parser.parseFromString(source,'application/xml');
+            let parserError=doc.querySelector('parsererror');
+            if(parserError){
+                const withoutDeclaration=source.replace(/^\s*<\?xml[^>]*\?>\s*/i,'');
+                doc=parser.parseFromString(`<modroot>${withoutDeclaration}</modroot>`,'application/xml');
+                parserError=doc.querySelector('parsererror');
+            }
+            if(parserError) throw new Error('modding.xml could not be parsed.');
+            doc.querySelectorAll('patch').forEach(node=>{
+                const type=(node.getAttribute('type')||'').toLowerCase();
+                const patchRaw=cleanModPath(node.getAttribute('patch')||'');
+                const targetRaw=cleanModPath(node.getAttribute('to')||'');
+                const join=(base,child)=>{ if(!child||child.startsWith('/')||child.includes(':')) return cleanModPath(child); const b=cleanModPath(base); return cleanModPath((b?b+'/':'')+child.replace(/^\.\//,'')); };
+                const patch=join(baseDir, patchRaw);
+                const target=join('', targetRaw.replace(/^\.\//,''));
+                const chapter=normalizeChapterFromTarget(target);
+                if(type==='xdelta' && patch) patches.push({chapter,patch,target});
+            });
+            return patches;
+        }
+
+        function parseTomlValue(raw){
+            const value=String(raw||'').trim();
+            if(!value) return '';
+            if((value.startsWith('"')&&value.endsWith('"')) || (value.startsWith("'")&&value.endsWith("'"))){
+                try { return JSON.parse(value.replace(/^'/,'"').replace(/'$/,'"').replace(/\\'/g,"'")); } catch(_){ return value.slice(1,-1); }
+            }
+            if(value.startsWith('[') && value.endsWith(']')){
+                const body=value.slice(1,-1).trim();
+                if(!body) return [];
+                const out=[]; let cur='',quote=null;
+                for(let i=0;i<body.length;i++){
+                    const ch=body[i];
+                    if((ch==='"'||ch==="'") && body[i-1]!=='\\'){ quote=quote===ch?null:(quote?quote:ch); cur+=ch; }
+                    else if(ch===',' && !quote){ out.push(parseTomlValue(cur)); cur=''; }
+                    else cur+=ch;
+                }
+                if(cur.trim()) out.push(parseTomlValue(cur));
+                return out;
+            }
+            if(/^true$/i.test(value)) return true;
+            if(/^false$/i.test(value)) return false;
+            if(/^-?\d+(?:\.\d+)?$/.test(value)) return Number(value);
+            return value;
+        }
+
+        // Minimal TOML reader for the fields used by the Deltamod standard.
+        function parseSimpleToml(text){
+            const root={}; let current=root;
+            for(const rawLine of String(text||'').split(/\r?\n/)){
+                const line=rawLine.replace(/\s+#.*$/,'').trim();
+                if(!line) continue;
+                const arrayTable=line.match(/^\[\[\s*([^\]]+)\s*\]\]$/);
+                if(arrayTable){
+                    const key=arrayTable[1].trim();
+                    if(!Array.isArray(root[key])) root[key]=[];
+                    const obj={}; root[key].push(obj); current=obj; continue;
+                }
+                const table=line.match(/^\[\s*([^\]]+)\s*\]$/);
+                if(table){
+                    const key=table[1].trim();
+                    if(!root[key] || typeof root[key]!=='object' || Array.isArray(root[key])) root[key]={};
+                    current=root[key]; continue;
+                }
+                const eq=line.indexOf('=');
+                if(eq<0) continue;
+                const key=line.slice(0,eq).trim();
+                current[key]=parseTomlValue(line.slice(eq+1));
+            }
+            return root;
+        }
+
+        function findArchiveEntryNamesFromZip(zip){
+            return Object.keys(zip.files).filter(n=>!zip.files[n].dir);
+        }
+
+        async function loadSevenZipFactory(){
+            if(sevenZipFactoryPromise) return sevenZipFactoryPromise;
+            sevenZipFactoryPromise=(async()=>{
+                const [jsRes,wasmRes]=await Promise.all([
+                    fetch(SEVENZIP_JS_URL,{cache:'no-store'}),
+                    fetch(SEVENZIP_WASM_URL,{cache:'no-store'})
+                ]);
+                if(!jsRes.ok) throw new Error(`Unable to load 7z-wasm JavaScript: HTTP ${jsRes.status}`);
+                if(!wasmRes.ok) throw new Error(`Unable to load 7z-wasm WASM: HTTP ${wasmRes.status}`);
+                const js=await jsRes.text();
+                const wasm=await wasmRes.arrayBuffer();
+                const factory=new Function(`${js}\n;return SevenZip;`)();
+                if(typeof factory!=='function') throw new Error('7z-wasm did not expose its SevenZip factory.');
+                return {factory,wasm};
+            })();
+            try{return await sevenZipFactoryPromise;}catch(e){sevenZipFactoryPromise=null;throw e;}
+        }
+
+        function walkSevenZipFS(FS, path, out){
+            const entries=FS.readdir(path).filter(name=>name!=='.' && name!=='..');
+            for(const name of entries){
+                const full=`${path}/${name}`;
+                const stat=FS.stat(full);
+                if(FS.isDir(stat.mode)) walkSevenZipFS(FS,full,out);
+                else out.push(full);
+            }
+        }
+
+        async function openArchive(bytes, nameHint=''){
+            const u8=bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+            const isZip=u8[0]===0x50 && u8[1]===0x4b;
+            const is7z=u8.length>=6 && u8[0]===0x37 && u8[1]===0x7a && u8[2]===0xbc && u8[3]===0xaf && u8[4]===0x27 && u8[5]===0x1c;
+            if(isZip){
+                if(!window.JSZip) throw new Error('JSZip has not finished loading yet.');
+                const zip=await JSZip.loadAsync(u8);
+                return {
+                    format:'zip',
+                    async names(){ return findArchiveEntryNamesFromZip(zip); },
+                    async read(path){ const n=cleanModPath(path).toLowerCase(); const key=Object.keys(zip.files).find(k=>cleanModPath(k).toLowerCase()===n); if(!key) throw new Error(`Missing archive entry: ${path}`); return await zip.file(key).async('uint8array'); },
+                    async text(path){ return new TextDecoder().decode(await this.read(path)); }
+                };
+            }
+            if(is7z){
+                const {factory,wasm}=await loadSevenZipFactory();
+                const module=await factory({locateFile:()=>SEVENZIP_WASM_URL, wasmBinary:wasm});
+                const input='/__webport_input.7z', output='/__webport_out';
+                try{ module.FS.writeFile(input,u8); }catch(e){ throw new Error(`7z-wasm input setup failed: ${e.message||e}`); }
+                try{ module.FS.mkdir(output); }catch(_){ }
+                const result=module.callMain(['x',input,`-o${output}`,'-y']);
+                if(result!==0) throw new Error(`7z extraction failed with exit code ${result}`);
+                const paths=[]; walkSevenZipFS(module.FS,output,paths);
+                const map=new Map(paths.map(p=>[cleanModPath(p.slice(output.length+1)).toLowerCase(),p]));
+                return {
+                    format:'7z',
+                    async names(){ return Array.from(map.keys()); },
+                    async read(path){ const actual=map.get(cleanModPath(path).toLowerCase()); if(!actual) throw new Error(`Missing archive entry: ${path}`); return module.FS.readFile(actual); },
+                    async text(path){ return new TextDecoder().decode(await this.read(path)); }
+                };
+            }
+            const hint=String(nameHint||'').toLowerCase();
+            throw new Error(`Unsupported mod archive format (${hint.endsWith('.7z')?'7z':'unknown'}). Expected ZIP or 7z.`);
+        }
+
+        function inferChapterFromPatchPath(path){
+            const p=cleanModPath(path);
+            const m=p.match(/(?:chapter|ch)[\s._-]*([0-5])(?:\D|$)/i) || p.match(/(?:^|[\/_-])([0-5])(?:\D|$).*xdelta$/i);
+            if(m) return String(parseInt(m[1],10));
+            if(/(?:^|[\/_-])main(?:[\._-]|$)/i.test(p) || /(?:^|[\/_-])data\.win$/i.test(p)) return '0';
+            return null;
+        }
+
+        function uniqueId(base){
+            const cleaned=String(base||'mod').toLowerCase().replace(/[^a-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'') || 'mod';
+            return `${cleaned}-${Date.now().toString(36)}`;
+        }
+
+        async function promptForChapter(label, suggested){
+            const answer=window.prompt(`${label}\nEnter target chapter (0-5):`, suggested??'5');
+            if(answer===null) throw new Error('Import cancelled: patch target chapter was not specified.');
+            const chapter=String(answer).trim();
+            if(!/^[0-5]$/.test(chapter)) throw new Error(`Invalid chapter "${chapter}". Enter a single chapter number 0-5.`);
+            return chapter;
+        }
+
+        function findJsonConfigName(lowerNames){
+            return lowerNames.find(([,n])=>/(?:^|\/)(?:mod_config|modconfig)\.json$/i.test(n))?.[0] || null;
+        }
+
+        function chapterFromDeltamodKey(key){
+            const m=String(key||'').match(/deltarune[_-]?([0-5])$/i);
+            return m ? String(m[1]) : null;
+        }
+
+        function addConfigPatchesFromJson(config, patchEntries, baseDir=''){
+            const files=config?.files;
+            if(!files || typeof files!=='object') return;
+            const joinModPath=(base,child)=>{
+                const c=cleanModPath(child||'');
+                if(!c) return '';
+                if(c.startsWith('/') || c.includes(':')) return c;
+                const b=cleanModPath(base||'');
+                return cleanModPath((b?b+'/':'')+c.replace(/^\.\//,''));
+            };
+            for(const [key,val] of Object.entries(files)){
+                if(!val || typeof val!=='object') continue;
+                const chapter=chapterFromDeltamodKey(key);
+                const rawPath=val.data_file_path||val.patch||val.xdelta||'';
+                const path=joinModPath(baseDir,rawPath);
+                if(path) patchEntries.push({chapter,patch:path,target:chapter==='0'?'data.win':(chapter?`chapter${chapter}_windows/data.win`:null),source:'mod_config'});
+            }
+        }
+
+        async function readModPackage(bytes, fileName){
+            const archive=await openArchive(bytes,fileName);
+            const names=await archive.names();
+            const lowerNames=names.map(n=>[n,cleanModPath(n).toLowerCase()]);
+            const findName=(...candidates)=>{ for(const candidate of candidates){ const wanted=cleanModPath(candidate).toLowerCase(); const found=lowerNames.find(([,n])=>n===wanted); if(found) return found[0]; } return null; };
+            const jsonMetaName=lowerNames.find(([,n])=>/(?:^|\/)meta\.json$/.test(n)||/(?:^|\/)_?deltamodinfo\.json$/.test(n)||/(?:^|\/)deltamod_info\.json$/.test(n))?.[0] || null;
+            const tomlMetaName=findName('meta.toml');
+            const configName=findJsonConfigName(lowerNames);
+            let metadata={};
+            if(jsonMetaName){ try{ metadata=JSON.parse(await archive.text(jsonMetaName)); }catch(e){ throw new Error(`${jsonMetaName}: invalid JSON (${e.message||e})`); } }
+            else if(tomlMetaName){ metadata=parseSimpleToml(await archive.text(tomlMetaName)); }
+            let config={};
+            if(configName){ try{ config=JSON.parse(await archive.text(configName)); }catch(e){ throw new Error(`${configName}: invalid JSON (${e.message||e})`); } }
+            const info=metadata.metadata||metadata;
+            const configMeta=config.metadata||{};
+            const packageID=String(info.packageID||metadata.packageID||configMeta.id||'').trim();
+            const name=String(info.name||metadata.name||configMeta.name||fileName.replace(/\.[^.]+$/,'')||packageID||'Imported Mod');
+            const version=String(info.version||metadata.version||configMeta.version||'1.0');
+            const description=String(info.description||metadata.description||configMeta.description||'');
+            const author=Array.isArray(info.author)?info.author.join(', '):String(info.author||metadata.author||configMeta.author||'');
+            const targetVersion=String(metadata.deltaruneTargetVersion||info.deltaruneTargetVersion||configMeta.game_version||'');
+
+            const xmlName=lowerNames.find(([,n])=>n.endsWith('modding.xml'))?.[0] || null;
+            const xmlDir=xmlName?cleanModPath(xmlName).split('/').slice(0,-1).join('/') : '';
+            let patchEntries=xmlName?parseDeltamodXML(await archive.text(xmlName),xmlDir):[];
+            const configDir=configName?cleanModPath(configName).split('/').slice(0,-1).join('/') : '';
+            addConfigPatchesFromJson(config,patchEntries,configDir);
+            const xdeltaNames=names.filter(n=>/\.xdelta$/i.test(n));
+            if(!patchEntries.length){
+                patchEntries=xdeltaNames.map(path=>({chapter:inferChapterFromPatchPath(path),patch:cleanModPath(path),target:null}));
+            }
+            const usedTargets=new Set(patchEntries.filter(p=>p.chapter!==null).map(p=>p.chapter));
+            for(const entry of patchEntries){
+                if(entry.chapter===null){
+                    const suggested=/ch(?:apter)?[\s._-]*([0-5])/i.exec(entry.patch)?.[1] ?? (patchEntries.length===1?'5':null);
+                    entry.chapter=await promptForChapter(`No chapter mapping was found for xdelta:\n${entry.patch}`, suggested);
+                }
+                entry.target=entry.target|| (entry.chapter==='0'?'data.win':`chapter${entry.chapter}_windows/data.win`);
+                usedTargets.add(entry.chapter);
+            }
+
+            const needed=[];
+            if(Array.isArray(metadata.neededFiles)) needed.push(...metadata.neededFiles);
+            if(Array.isArray(info.neededFiles)) needed.push(...info.neededFiles);
+            const checksums=[];
+            for(const item of needed){
+                const chapter=normalizeChapterFromTarget(item.file||item.path||'');
+                const checksum=String(item.checksum||'').trim().toLowerCase();
+                if(chapter!==null && /^[0-9a-f]{64}$/i.test(checksum)) checksums.push([chapter,checksum]);
+            }
+            const extraFiles=[];
+            if(config?.files && typeof config.files==='object'){
+                const joinExtra=(child)=>{
+                    const c=cleanModPath(child||'');
+                    if(!c) return '';
+                    if(c.startsWith('/') || c.includes(':')) return c;
+                    return cleanModPath((configDir?configDir+'/':'')+c.replace(/^\.\//,''));
+                };
+                for(const [key,val] of Object.entries(config.files)){
+                    const chapter=chapterFromDeltamodKey(key);
+                    if(val && Array.isArray(val.extra_files)){ for(const raw of val.extra_files){ const path=joinExtra(raw); if(path) extraFiles.push({chapter,path}); } }
+                }
+            }
+            const format=patchEntries.length ? ((xmlName||jsonMetaName||tomlMetaName||configName) ? 'Deltamod/xdelta' : 'Legacy xdelta') : ((jsonMetaName||tomlMetaName||configName) ? 'Mod package' : 'Asset mod');
+            const id=packageID || uniqueId(name);
+            return {
+                id,name,version,description,author,targetVersion,format,archiveFormat:archive.format,
+                archiveName:fileName,patches:patchEntries,extraFiles,checksums,importedAt:Date.now(),enabled:true,forcePatch:false,zip:bytes
+            };
+        }
+
+        async function importMod(file){
+            if(!file) throw new Error('No mod file was selected.');
+            if(!(file instanceof File)) throw new TypeError('Selected mod is not a File object.');
+            setStatus(`Importing ${file.name}...`);
+            const bytes=new Uint8Array(await file.arrayBuffer());
+            setStatus(`Reading ${file.name}...`);
+            const record=await readModPackage(bytes,file.name);
+            if(!record || !record.id) throw new Error('The package did not produce usable mod metadata.');
+            const existing=await listStoredMods();
+            const duplicate=existing.find(m=>String(m.id)===String(record.id));
+            if(duplicate){
+                record.id=uniqueId(record.id);
+            }
+            await putStoredMod(record);
+            setStatus(`Imported ${record.name}. Reload to apply xdelta patches.`);
+            console.log('[Mod Manager] Imported mod:', {name:record.name,id:record.id,format:record.format,patches:record.patches});
+            return record;
+        }
+
+        async function validateGameMakerArchive(blob, label='game.unx') {
+            const head = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
+            if (head.length < 8 || head[0] !== 0x46 || head[1] !== 0x4f || head[2] !== 0x52 || head[3] !== 0x4d) {
+                throw new Error(`${label}: patched output is not a valid GameMaker FORM archive.`);
+            }
+            const view = new DataView(head.buffer, head.byteOffset, head.byteLength);
+            const formSize = view.getUint32(4, true);
+            const expectedTotal = formSize + 8;
+            if (expectedTotal !== blob.size) {
+                throw new Error(`${label}: patched output is truncated/inconsistent (actual ${blob.size} bytes, FORM header requires ${expectedTotal} bytes).`);
+            }
+            return true;
+        }
+
+
+
+        function gmNormalizeModText(value){
+            return String(value||'')
+                .toLowerCase()
+                .replace(/\.zip$/i,'')
+                .replace(/\s+/g,' ')
+                .trim();
+        }
+
+        function gmPatchIdentity(record, chapter){
+            const patches=(record.patches||[])
+                .filter(p=>String(p.chapter)===String(chapter))
+                .map(p=>[
+                    p.patch||p.path||p.file||'',
+                    p.target||'',
+                    p.source||'',
+                    p.base||'',
+                    p.checksum||p.sha256||p.md5||''
+                ].join(':'))
+                .sort();
+            return patches.join('|');
+        }
+
+        function gmLogicalModKey(record, chapter){
+            // Storage IDs can differ when the same mod is imported twice.
+            // Build a stable identity from the logical name + the actual Chapter
+            // patch descriptors. This keeps genuinely different same-name mods
+            // separate when their patch metadata differs.
+            const name=gmNormalizeModText(record.name||record.title||'');
+            const patch=gmNormalizeModText(gmPatchIdentity(record,chapter));
+            return `${name}::${patch}`;
+        }
+
+        function dedupeLogicalMods(records, chapter, logFn){
+            const seen=new Map();
+            const result=[];
+            for(const record of records){
+                const key=gmLogicalModKey(record,chapter);
+                if(seen.has(key)){
+                    const previous=seen.get(key);
+                    logFn?.(`DEDUP LOGICAL MOD: "${record.name}" duplicates stored record ${previous.id}; keeping first record.`);
+                    continue;
+                }
+                seen.set(key,record);
+                result.push(record);
+            }
+            return result;
+        }
+
+        function gmBuildMergePlan(records, chapter){
+            const unique=dedupeLogicalMods(records,chapter);
+            return unique.map(record=>({
+                id:String(record.id),
+                logicalKey:gmLogicalModKey(record,chapter),
+                name:record.name||record.title||String(record.id),
+                patches:(record.patches||[])
+                    .filter(p=>String(p.chapter)===String(chapter))
+                    .map(p=>({
+                        path:p.patch||p.path||p.file||null,
+                        source:p.source||p.base||null,
+                        target:p.target||null,
+                        checksum:p.checksum||p.sha256||p.md5||null
+                    }))
+            }));
+        }
+
+        const GM_COMPAT_CACHE_KEY='GM_MOD_COMPAT_CACHE_V1';
+
+        function readCompatibilityCache(){
+            try{
+                const raw=localStorage.getItem(GM_COMPAT_CACHE_KEY);
+                const parsed=raw?JSON.parse(raw):{};
+                if(parsed && typeof parsed==='object') return parsed;
+            }catch(e){ console.warn('[Mod Manager] Compatibility cache read failed:',e); }
+            return {orders:{},results:{},updatedAt:0};
+        }
+
+        function writeCompatibilityCache(cache){
+            try{
+                cache.updatedAt=Date.now();
+                localStorage.setItem(GM_COMPAT_CACHE_KEY,JSON.stringify(cache));
+                return true;
+            }catch(e){
+                console.warn('[Mod Manager] Compatibility cache write failed:',e);
+                return false;
+            }
+        }
+
+        function compatibilitySetKey(chapter,baseHash,records){
+            const keys=records.map(r=>gmLogicalModKey(r,chapter)).sort().join('|');
+            return `${String(chapter)}|${baseHash}|${keys}`;
+        }
+
+        function compatibilityPatchSignature(record,chapter){
+            return `${gmLogicalModKey(record,chapter)}|${record.targetVersion||''}`;
+        }
+
+        function saveCachedOrder(chapter,baseHash,records,orderIds,meta={}){
+            const cache=readCompatibilityCache();
+            const key=compatibilitySetKey(chapter,baseHash,records);
+            cache.orders[key]={
+                chapter:String(chapter),
+                baseHash,
+                orderIds:orderIds.map(String),
+                signatures:Object.fromEntries(records.map(r=>[String(r.id),compatibilityPatchSignature(r,chapter)])),
+                forced:!!meta.forced,
+                source:meta.source||'compatibility-analysis',
+                updatedAt:Date.now()
+            };
+            writeCompatibilityCache(cache);
+            console.log('[Mod Manager] Saved compatibility order:', cache.orders[key]);
+        }
+
+        function getCachedOrder(chapter,baseHash,records){
+            const cache=readCompatibilityCache();
+            const key=compatibilitySetKey(chapter,baseHash,records);
+            const entry=cache.orders?.[key];
+            if(!entry || !Array.isArray(entry.orderIds) || entry.orderIds.length!==records.length) return null;
+            const byId=new Map(records.map(r=>[String(r.id),r]));
+            const ordered=[];
+            for(const id of entry.orderIds){
+                const r=byId.get(String(id));
+                if(!r) return null;
+                if(entry.signatures?.[String(id)]!==compatibilityPatchSignature(r,chapter)) return null;
+                ordered.push(r);
+            }
+            return {entry,records:ordered};
+        }
+
+        function clearCompatibilityCache(){
+            try{ localStorage.removeItem(GM_COMPAT_CACHE_KEY); }catch(_){}
+            console.log('[Mod Manager] Compatibility cache cleared.');
+            showModNotice('Compatibility cache cleared','Saved load-order and compatibility results were removed.','info');
+        }
+
+        async function applyPatchRecordToChapter(bytes, chapter, activeRecords){
+            let current=bytes instanceof Blob ? bytes : new Blob([bytes],{type:'application/octet-stream'});
+            let originalBaseHash=await sha256Hex(current);
+            let appliedRecords=[];
+
+            const cached=getCachedOrder(chapter,originalBaseHash,activeRecords);
+            if(cached){
+                activeRecords=cached.records;
+                console.log(`[Mod Manager] Using cached compatibility order for Chapter ${chapter}: ${activeRecords.map(r=>r.name).join(' → ')}`);
+            }else{
+                console.log(`[Mod Manager] No cached compatibility order for Chapter ${chapter}; using stored load order.`);
+            }
+
+            for(const record of activeRecords){
+                const patchInfo=record.patches.filter(p=>String(p.chapter)===String(chapter));
+                if(!patchInfo.length) continue;
+                const checksum=record.checksums.find(([c])=>String(c)===String(chapter));
+                const currentVersion=knownGameVersion(chapter, originalBaseHash);
+                const mismatch=!!(checksum && checksum[1] && checksum[1]!==originalBaseHash);
+                record.lastCompatibility={chapter:String(chapter),status:mismatch?'incompatible':(checksum?'compatible':'unverified'),version:currentVersion||null,expectedHash:checksum?.[1]||null,actualHash:originalBaseHash,checkedAt:Date.now()};
+                try{ await putStoredMod(record); }catch(_){ }
+                const expectedVersion=record.targetVersion ? `Deltarune ${record.targetVersion}` : (checksum ? "the mod's required base build" : 'an unknown base build');
+                if(mismatch && !record.forcePatch){
+                    const expectedKnown=knownGameVersion(chapter, checksum[1]);
+                    const detail=`${record.name} cannot be applied to this game build. Expected ${expectedKnown||expectedVersion}, but this Chapter ${chapter} archive is ${currentVersion||'unverified'}. The mod was not applied.`;
+                    console.warn(`[Mod Manager] ${detail} Expected ${checksum[1]}, got ${originalBaseHash}.`);
+                    showModNotice('Mod not compatible', detail, 'warn');
+                    setStatus(detail);
+                    continue;
+                }
+                if(mismatch && record.forcePatch){
+                    const expectedKnown=knownGameVersion(chapter, checksum[1]);
+                    const detail=`${record.name}: checksum mismatch ignored by Force Patch. Expected ${expectedKnown||expectedVersion}, got ${currentVersion||'unverified'}. Attempting anyway.`;
+                    console.warn(`[Mod Manager] ${detail}`);
+                    showModNotice('Attempting an incompatible mod', detail+' This may fail or produce an invalid archive.', 'warn');
+                }
+                const archive=await openArchive(record.zip, record.archiveName||record.name||'mod.zip');
+                for(const patchEntry of patchInfo){
+                    const patchBytes=await archive.read(patchEntry.patch);
+                    console.log(`[Mod Manager] Applying ${record.name} to chapter ${chapter}${record.forcePatch?' (force patch)':''}...`);
+                    current=await decodeXdeltaLarge(patchBytes,current,!!record.forcePatch);
+                    console.log(`[Mod Manager] ${record.name}: patch produced ${current.size} bytes.`);
+                    await validateGameMakerArchive(current, `Mod ${record.name} chapter ${chapter}`);
+                    if(checksum) record.lastCompatibility.status = mismatch ? 'incompatible' : 'compatible';
+                    else record.lastCompatibility.status = 'applied-unverified';
+                    try{ await putStoredMod(record); }catch(_){ }
+                }
+                appliedRecords.push(record);
+            }
+            const finalActive=appliedRecords.filter(r=>r.enabled!==false);
+            if(finalActive.length===activeRecords.length){
+                try{
+                    saveCachedOrder(chapter,originalBaseHash,finalActive,finalActive.map(r=>r.id),{
+                        source:'runtime-success',
+                        forced:finalActive.some(r=>!!r.forcePatch)
+                    });
+                }catch(_){ }
+            }
+            return current;
+        }
+
+        async function prepareChapterArchive(urls, chapter){
+            const archiveParts=await Promise.all(urls.map(async url=>{
+                const response=await window.fetch(url);
+                if(!response.ok) throw new Error(`Unable to load archive chunk: ${url}`);
+                return new Uint8Array(await response.arrayBuffer());
+            }));
+            let total=0; for(const part of archiveParts) total+=part.byteLength;
+            const combined=new Uint8Array(total); let offset=0;
+            for(const part of archiveParts){ combined.set(part,offset); offset+=part.byteLength; }
+            const records=await listStoredMods();
+            const active=records.filter(r=>r.enabled!==false && Array.isArray(r.patches) && r.patches.length);
+            if(!active.length) return combined;
+            try{
+                const applied=await applyPatchRecordToChapter(combined,chapter,active);
+                return applied;
+            }catch(error){
+                showModNotice('Mod could not be applied', error.message||String(error), 'error');
+                throw error;
+            }
+        }
+
+        function registerModAsset(modName, path, data){
+            const canonical=cleanModPath(path);
+            const key=canonical.toLowerCase();
+            const previous=MOD_FILE_OWNERS.get(key);
+            let conflict=null;
+            if(previous && previous!==modName){
+                conflict={path:canonical,first:previous,second:modName};
+                console.warn('[Mod Manager] Asset override conflict:', conflict);
+            }
+            MOD_FILE_OWNERS.set(key,modName);
+            MOD_FILES.set(canonical,data);
+            MOD_FILES.set(key,data);
+            return conflict;
+        }
+        function compatibilityLabel(record){
+            const c=record.lastCompatibility;
+            if(c?.status==='compatible') return {label:`Compatible${c.version?' · '+c.version:''}`,cls:'gm-mod-compat-ok'};
+            if(c?.status==='incompatible') return {label:`Incompatible${c.version?' · '+c.version:''}`,cls:'gm-mod-compat-bad'};
+            if(c?.status==='applied-unverified') return {label:'Applied · unverified',cls:'gm-mod-compat-unknown'};
+            return {label:'Unverified',cls:'gm-mod-compat-unknown'};
+        }
+
+        async function loadEnabledMods(){
+            MOD_FILES.clear();
+            MOD_FILE_OWNERS.clear();
+            MODS.length=0;
+            const records=await listStoredMods();
+            const chapter=String(new URLSearchParams(location.search).get('c')||'0');
+            const conflictSummary=[];
+            for(const record of records){
+                if(record.enabled===false) continue;
+                if(Array.isArray(record.targets) && record.targets.length && !record.targets.includes(chapter)) continue;
+                try{
+                    const archive=await openArchive(record.zip,record.archiveName||record.name||'mod.zip');
+                    const names=await archive.names();
+                    const configured = new Set();
+                    for(const ef of (record.extraFiles||[])){
+                        if(ef.chapter!==null && String(ef.chapter)!==chapter) continue;
+                        const raw=cleanModPath(ef.path);
+                        if(!raw) continue;
+                        const match=names.find(n=>cleanModPath(n).toLowerCase()===raw.toLowerCase() || cleanModPath(n).toLowerCase().endsWith('/'+raw.toLowerCase()));
+                        if(!match) continue;
+                        const data=await archive.read(match);
+                        const outName=raw.split('/').pop()===raw ? raw : raw;
+                        const conflict=registerModAsset(record.name,outName,data); if(conflict) conflictSummary.push(conflict); configured.add(cleanModPath(match).toLowerCase());
+                    }
+                    for(const rawName of names){
+                        const canonical=cleanModPath(rawName);
+                        const lower=canonical.toLowerCase();
+                        if(!canonical || configured.has(lower) || /(?:^|\/)(?:meta\.json|meta\.toml|mod_config\.json|_?deltamodinfo\.json|deltamod_info\.json|modding\.xml)$/i.test(canonical)) continue;
+                        if(/\.(?:xdelta|exe)$/i.test(canonical)) continue;
+                        if(!/\.(?:ogg|png|jpg|jpeg|json|txt|mp4|wav|webm|ini)$/i.test(canonical)) continue;
+                        const data=await archive.read(rawName);
+                        const outName=canonical.replace(/^[^/]+\//,'');
+                        const conflict=registerModAsset(record.name,outName,data); if(conflict) conflictSummary.push(conflict);
+                    }
+                    if((record.patches||[]).length || names.some(n=>/\.(?:ogg|png|json|txt|mp4|wav|webm)$/i.test(n))) MODS.push(record);
+                }catch(e){ console.error(`[Mod Manager] Failed to load ${record.name}:`,e); }
+            }
+            loaded=true;
+            window.GM_MOD_FILES=MOD_FILES;
+            if(conflictSummary.length){
+                const unique=[...new Map(conflictSummary.map(c=>[c.path+'\u0000'+c.first+'\u0000'+c.second,c])).values()];
+                const sample=unique.slice(0,3).map(c=>`${c.path}: ${c.first} vs ${c.second}`).join('\n');
+                showModNotice('Mod asset conflict', `${unique.length} enabled mod override(s) target the same external asset(s). Later load-order entries currently win.\n\n${sample}`, 'warn');
+            }
+            return MODS.length;
+        }
+
+        window.GM_MOD_GET_RESPONSE=function(requestedPath){
+            if(!loaded) return null;
+            const p=cleanModPath(requestedPath);
+            const candidates=[p,p.replace(/^chapter\d+_windows\//i,''),p.replace(/^chapter\d+\//i,'')];
+            for(const candidate of candidates){
+                const data=MOD_FILES.get(candidate)||MOD_FILES.get(candidate.toLowerCase());
+                if(data){
+                    const ext=(candidate.split('.').pop()||'').toLowerCase();
+                    const mime={ogg:'audio/ogg',mp4:'video/mp4',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',json:'application/json',js:'application/javascript',txt:'text/plain',wasm:'application/wasm'}[ext]||'application/octet-stream';
+                    return new Response(new Blob([data],{type:mime}),{status:200,headers:{'Content-Type':mime,'Content-Length':String(data.byteLength),'X-GM-Mod':'1'}});
+                }
+            }
+            return null;
+        };
+
+        window.GM_MOD_PREPARE_ARCHIVE=prepareChapterArchive;
+        window.GM_MODS_READY=(async()=>{ await loadEnabledMods(); return await listStoredMods(); })().catch(e=>{ console.error('[Mod Manager] Startup failed:',e); loaded=true; return []; });
+        window.GM_MOD_DEBUG_READY=window.GM_MODS_READY.then(()=>populateStackDebugUI()).catch(()=>{}); // UI only; no compatibility search on startup.
+
+        async function debugLoadBaseArchive(chapter){
+            const chunks=Array.isArray(window.GM_GAME_ARCHIVE_CHUNKS)&&window.GM_GAME_ARCHIVE_CHUNKS.length
+                ?window.GM_GAME_ARCHIVE_CHUNKS:['game.unx'];
+            const buffers=[];
+            for(const chunk of chunks){
+                const raw=String(chunk).replace(/^\/+/, '');
+                const url=window.GM_RAW_GITHUB_BASE + raw;
+                const response=await fetch(url,{cache:'no-store'});
+                if(!response.ok) throw new Error(`Base archive download failed: ${response.status} ${url}`);
+                buffers.push(new Uint8Array(await response.arrayBuffer()));
+            }
+            let total=0; for(const b of buffers) total+=b.byteLength;
+            const combined=new Uint8Array(total); let off=0;
+            for(const b of buffers){ combined.set(b,off); off+=b.byteLength; }
+            return new Blob([combined],{type:'application/octet-stream'});
+        }
+
+        async function debugApplyRecord(base, record, chapter, force){
+            let current=base instanceof Blob?base:new Blob([base],{type:'application/octet-stream'});
+            const patchInfo=(record.patches||[]).filter(p=>String(p.chapter)===String(chapter));
+            if(!patchInfo.length) throw new Error(`${record.name}: no Chapter ${chapter} xdelta patch is present.`);
+            const archive=await openArchive(record.zip,record.archiveName||record.name||'mod.zip');
+            for(const patchEntry of patchInfo){
+                const patchBytes=await archive.read(patchEntry.patch);
+                console.log(`[Stack Debug] ${record.name}: applying ${patchEntry.patch}${force?' (checksum disabled)':''}`);
+                current=await decodeXdeltaLarge(patchBytes,current,!!force);
+                await validateGameMakerArchive(current,`Stack Debug / ${record.name} / Chapter ${chapter}`);
+            }
+            return current;
+        }
+
+        async function debugStackPair(recordA,recordB,chapter){
+            const out=document.getElementById('gm-debug-output');
+            if(!out) throw new Error('Debug output panel is missing.');
+            const write=(line)=>{out.textContent += line+'\n'; out.scrollTop=out.scrollHeight; console.log('[Stack Debug]',line);};
+            out.textContent='';
+            const base=await debugLoadBaseArchive(chapter);
+            const baseHash=await sha256Hex(base);
+            write(`Chapter ${chapter} base: ${base.size} bytes`);
+            write(`Base SHA-256: ${baseHash}`);
+
+            async function runOrder(first,second){
+                const label=`${first.name} → ${second.name}`;
+                write(`\n=== ${label} ===`);
+                let current=base;
+                const firstOut=await debugApplyRecord(current,first,chapter,false);
+                const firstHash=await sha256Hex(firstOut);
+                write(`After ${first.name}: ${firstOut.size} bytes`);
+                write(`After ${first.name} SHA-256: ${firstHash}`);
+
+                // First try the second patch normally. This is the key diagnostic:
+                // if it succeeds, the two patches are genuinely chain-compatible.
+                try{
+                    const normalOut=await debugApplyRecord(firstOut,second,chapter,false);
+                    const normalHash=await sha256Hex(normalOut);
+                    write(`Normal ${second.name}: SUCCESS`);
+                    write(`Normal ${second.name} output: ${normalOut.size} bytes`);
+                    write(`Normal ${second.name} SHA-256: ${normalHash}`);
+                    write(`Normal ${second.name}: ARCHIVE VALIDATED`);
+                }catch(normalError){
+                    write(`Normal ${second.name}: FAILED`);
+                    write(`Normal failure: ${normalError.message||normalError}`);
+                    write(`Retrying ${second.name} with checksum disabled...`);
+                    try{
+                        const forcedOut=await debugApplyRecord(firstOut,second,chapter,true);
+                        const forcedHash=await sha256Hex(forcedOut);
+                        write(`Forced ${second.name}: SUCCESS`);
+                        write(`Forced ${second.name} output: ${forcedOut.size} bytes`);
+                        write(`Forced ${second.name} SHA-256: ${forcedHash}`);
+                        write(`Forced ${second.name}: ARCHIVE VALIDATED`);
+                    }catch(forceError){
+                        write(`Forced ${second.name}: FAILED`);
+                        write(`Forced failure: ${forceError.message||forceError}`);
+                    }
+                }
+                return true;
+            }
+            await runOrder(recordA,recordB);
+            await runOrder(recordB,recordA);
+            write('\n=== DONE ===');
+            return true;
+        }
+
+
+        async function debugRunModStage(current, record, chapter, write, label){
+            // A stage is allowed to use the same two-step policy as the pair debugger:
+            // normal patch first; if the stage rejects the current source, retry with
+            // checksum verification disabled. A forced failure kills this prefix.
+            try {
+                const normal=await debugApplyRecord(current,record,chapter,false);
+                write(`${label}: normal SUCCESS (${normal.size} bytes)`);
+                write(`${label}: normal SHA-256 ${await sha256Hex(normal)}`);
+                return {ok:true, blob:normal, forced:false};
+            } catch(normalError){
+                write(`${label}: normal FAILED — ${normalError.message||normalError}`);
+                write(`${label}: retrying with checksum disabled...`);
+                try {
+                    const forced=await debugApplyRecord(current,record,chapter,true);
+                    write(`${label}: forced SUCCESS (${forced.size} bytes)`);
+                    write(`${label}: forced SHA-256 ${await sha256Hex(forced)}`);
+                    return {ok:true, blob:forced, forced:true};
+                } catch(forceError){
+                    write(`${label}: forced FAILED — ${forceError.message||forceError}`);
+                    return {ok:false,error:forceError};
+                }
+            }
+        }
+
+        async function debugAllPermutations(records, chapter){
+            const out=document.getElementById('gm-debug-output');
+            if(!out) throw new Error('Debug output panel is missing.');
+            const write=(line)=>{out.textContent += line+'\n'; out.scrollTop=out.scrollHeight; console.log('[Stack Debug]',line);};
+            out.textContent=`Running hybrid compatibility search for Chapter ${chapter}...\nCompatibility cache: persistent localStorage
+Logical mod deduplication: enabled\n`;
+
+            if(records.length<2) throw new Error('Need at least two enabled Chapter patches.');
+            if(records.length>8) throw new Error(`Refusing to search ${records.length} mods: worst-case search is still exponential. Use at most 8.`);
+
+            // Deduplicate by logical mod identity rather than storage record ID.
+            // The same imported mod can have multiple library IDs.
+            records=dedupeLogicalMods(records,chapter,write);
+
+            const base=await debugLoadBaseArchive(chapter);
+            const baseHash=await sha256Hex(base);
+            const names=new Map(records.map(r=>[String(r.id),r.name]));
+            const ids=records.map(r=>String(r.id));
+
+            write(`Chapter ${chapter} base: ${base.size} bytes`);
+            write(`Base SHA-256: ${baseHash}`);
+            write(`Mods after deduplication: ${records.map(r=>r.name).join(' | ')}`);
+            write('Strategy: pairwise graph is a heuristic/ranking layer, not a hard requirement for longer chains.');
+
+            const stateCache=new Map([[baseHash,base]]);
+            const transitionCache=new Map(); // source hash + mod id
+            const pairCache=new Map();       // modA -> modB isolated pair result
+            const pairScore=new Map();       // modA -> modB numeric preference
+
+            const namesFor=arr=>arr.map(x=>names.get(String(x))||String(x)).join(' → ');
+            const tkey=(h,id)=>`${h}\u0001${id}`;
+            const pkey=(a,b)=>`${a}\u0001${b}`;
+
+            async function transition(sourceBlob,sourceHash,mod,label){
+                const key=tkey(sourceHash,String(mod.id));
+                if(transitionCache.has(key)){
+                    const hit=transitionCache.get(key);
+                    write(`CACHE: ${label} from ${sourceHash.slice(0,12)}… => ${hit.ok?'SUCCESS':'FAILURE'}`);
+                    return hit;
+                }
+                const stage=await debugRunModStage(sourceBlob,mod,chapter,write,label);
+                if(stage.ok && stage.blob){
+                    stage.hash=await sha256Hex(stage.blob);
+                    stateCache.set(stage.hash,stage.blob);
+                }
+                transitionCache.set(key,stage);
+                return stage;
+            }
+
+            // Build isolated pairwise hints. These are NOT used to eliminate a
+            // longer chain; they only affect search order and obvious global bans.
+            write('\n=== PAIRWISE HINT GRAPH ===');
+            for(const a of records){
+                const a0=await transition(base,baseHash,a,a.name);
+                if(!a0.ok){
+                    write(`BASE BLOCK: ${a.name}`);
+                    continue;
+                }
+                for(const b of records){
+                    if(String(a.id)===String(b.id)) continue;
+                    const key=pkey(a.id,b.id);
+                    const stage=await transition(a0.blob,a0.hash,b,`${a.name} → ${b.name}`);
+                    if(stage.ok){
+                        pairCache.set(key,{ok:true,forced:!!stage.forced});
+                        // Higher score = try earlier.
+                        pairScore.set(key,stage.forced?1:2);
+                        write(`HINT EDGE ${a.name} → ${b.name}: ${stage.forced?'FORCED':'NORMAL'}`);
+                    }else{
+                        pairCache.set(key,{ok:false,error:stage.error});
+                        pairScore.set(key,0);
+                        write(`HINT EDGE ${a.name} → ${b.name}: FAIL`);
+                    }
+                }
+            }
+
+            // Global failure classification: only package-level/path errors are
+            // safe to ban. State-dependent failures remain searchable.
+            const globallyBlocked=new Set();
+            for(const [key,result] of pairCache){
+                if(result.ok) continue;
+                const msg=String(result.error?.message||result.error||'');
+                if(/Missing archive entry|package|archive entry|not found/i.test(msg)){
+                    const [,bId]=key.split('\u0001');
+                    globallyBlocked.add(String(bId));
+                }
+            }
+            for(const id of globallyBlocked){
+                write(`GLOBAL BLOCK HINT: ${names.get(id)} has a package/path failure in at least one test.`);
+            }
+
+            // Search partial chains. Memoize exact state + remaining-set, not just
+            // prefixes. Pairwise scores only order branches; they do not prune them.
+            const completed=[];
+            const failedStates=new Set();
+            const visitedSearchStates=new Set();
+
+            function stateKey(hash,remaining){
+                return `${hash}\u0002${remaining.slice().sort().join('\u0001')}`;
+            }
+
+            function candidateScore(lastId,nextId){
+                return pairScore.get(pkey(lastId,nextId))??1;
+            }
+
+            async function dfs(pathIds,sourceHash,remaining,forcedChain){
+                const sk=stateKey(sourceHash,remaining);
+                if(visitedSearchStates.has(sk)){
+                    write(`SKIP SEARCH STATE: ${namesFor(pathIds)} with same source/remaining set`);
+                    return;
+                }
+                visitedSearchStates.add(sk);
+
+                if(remaining.length===0){
+                    completed.push({ids:[...pathIds],hash:sourceHash,forced:forcedChain,blob:stateCache.get(sourceHash)});
+                    write(`COMPLETE: ${namesFor(pathIds)} => ${sourceHash}`);
+                    return;
+                }
+
+                const sourceBlob=stateCache.get(sourceHash);
+                if(!sourceBlob) throw new Error(`Missing cached source ${sourceHash}`);
+
+                const lastId=pathIds[pathIds.length-1]||null;
+                const nexts=remaining
+                    .map(id=>records.find(r=>String(r.id)===String(id)))
+                    .filter(Boolean)
+                    .filter(r=>!globallyBlocked.has(String(r.id)))
+                    .sort((a,b)=>{
+                        if(!lastId) return 0;
+                        return candidateScore(lastId,b.id)-candidateScore(lastId,a.id);
+                    });
+
+                for(const mod of nexts){
+                    const nextPath=[...pathIds,String(mod.id)];
+                    const label=namesFor(nextPath);
+                    const stage=await transition(sourceBlob,sourceHash,mod,mod.name);
+
+                    if(!stage.ok){
+                        const msg=String(stage.error?.message||stage.error||'');
+                        // Only prune the exact resulting state/transition. Do NOT
+                        // globally forbid this mod, because the same mod can work
+                        // from a different source state.
+                        failedStates.add(`${sourceHash}\u0001${mod.id}`);
+                        write(`PRUNE STATE TRANSITION: ${label}`);
+                        continue;
+                    }
+
+                    await dfs(
+                        nextPath,
+                        stage.hash,
+                        remaining.filter(id=>id!==String(mod.id)),
+                        forcedChain||!!stage.forced
+                    );
+                }
+            }
+
+            await dfs([],baseHash,ids,false);
+
+            write('\n=== HYBRID SEARCH SUMMARY ===');
+            write(`Pairwise hints: ${pairCache.size}`);
+            write(`Global package/path blocks: ${globallyBlocked.size}`);
+            write(`Unique search states visited: ${visitedSearchStates.size}`);
+            write(`Exact failed state→mod transitions: ${failedStates.size}`);
+            write(`Complete orders found: ${completed.length}`);
+            completed.forEach((x,i)=>write(`${i+1}. ${namesFor(x.ids)} => ${x.hash}${x.forced?' [forced]':''}`));
+
+            if(completed.length){
+                const first=completed[0];
+                try{
+                    saveCachedOrder(chapter,baseHash,records,first.ids,{
+                        source:'hybrid-search',
+                        forced:first.forced
+                    });
+                    write(`CACHE SAVE: preferred order = ${namesFor(first.ids)}`);
+                }catch(e){
+                    write(`CACHE SAVE FAILED: ${e.message||e}`);
+                }
+            }else{
+                write('CACHE SAVE: no complete order found; nothing will be tried automatically at startup.');
+            }
+
+            write('=== DONE ===');
+
+            return {completed,visitedSearchStates:visitedSearchStates.size,failedStates:failedStates.size,pairCache};
+        }
+
+        async function populateStackDebugUI(){
+            const a=document.getElementById('gm-debug-a');
+            const b=document.getElementById('gm-debug-b');
+            if(!a||!b) return;
+            const records=(await listStoredMods()).filter(r=>r.enabled!==false && (r.patches||[]).some(p=>String(p.chapter)===String(new URLSearchParams(location.search).get('c')||'0')));
+            const oldA=a.value,oldB=b.value;
+            a.innerHTML=''; b.innerHTML='';
+            for(const r of records){
+                const o1=document.createElement('option');o1.value=r.id;o1.textContent=r.name;
+                const o2=document.createElement('option');o2.value=r.id;o2.textContent=r.name;
+                a.appendChild(o1);b.appendChild(o2);
+            }
+            if(records.length>1){
+                a.value=records.some(r=>r.id===oldA)?oldA:records[0].id;
+                b.value=records.some(r=>r.id===oldB)?oldB:records[1].id;
+            }
+            const get=(id)=>records.find(r=>String(r.id)===String(id));
+            async function run(which){
+                const ra=get(a.value),rb=get(b.value); if(!ra||!rb) throw new Error('Select two enabled Chapter patches.');
+                if(ra.id===rb.id) throw new Error('Choose two different mods.');
+                const chapter=String(new URLSearchParams(location.search).get('c')||'0');
+                const out=document.getElementById('gm-debug-output'); if(out) out.textContent=`Running stack debug for Chapter ${chapter}...\n`;
+                if(which==='ab'){
+                    const base=await debugLoadBaseArchive(chapter); const one=await debugApplyRecord(base,ra,chapter,false); const oneHash=await sha256Hex(one); (out||{}).textContent+=`A → ${ra.name}: ${one.size} bytes / ${oneHash}\n`;
+                    const two=await debugApplyRecord(one,rb,chapter,true); const twoHash=await sha256Hex(two); (out||{}).textContent+=`A → B: ${two.size} bytes / ${twoHash}\nVALIDATED\n`;
+                }else if(which==='ba'){
+                    const base=await debugLoadBaseArchive(chapter); const one=await debugApplyRecord(base,rb,chapter,false); const oneHash=await sha256Hex(one); (out||{}).textContent+=`B → ${rb.name}: ${one.size} bytes / ${oneHash}\n`;
+                    const two=await debugApplyRecord(one,ra,chapter,true); const twoHash=await sha256Hex(two); (out||{}).textContent+=`B → A: ${two.size} bytes / ${twoHash}\nVALIDATED\n`;
+                }else{
+                    await debugStackPair(ra,rb,chapter);
+                }
+            }
+            document.getElementById('gm-debug-ab').onclick=()=>run('ab').catch(e=>{const o=document.getElementById('gm-debug-output');if(o)o.textContent+='\nERROR: '+(e.message||e);console.error('[Stack Debug]',e);});
+            document.getElementById('gm-debug-ba').onclick=()=>run('ba').catch(e=>{const o=document.getElementById('gm-debug-output');if(o)o.textContent+='\nERROR: '+(e.message||e);console.error('[Stack Debug]',e);});
+            document.getElementById('gm-debug-both').onclick=()=>run('both').catch(e=>{const o=document.getElementById('gm-debug-output');if(o)o.textContent+='\nERROR: '+(e.message||e);console.error('[Stack Debug]',e);});
+
+            const mergePlanBtn=document.getElementById('gm-debug-merge-plan');
+            if(mergePlanBtn){
+                mergePlanBtn.onclick=async()=>{
+                    try{
+                        const chapter=String(new URLSearchParams(location.search).get('c')||'0');
+                        const records=(await listStoredMods()).filter(r=>r.enabled!==false);
+                        const plan=gmBuildMergePlan(records,chapter);
+                        const out=document.getElementById('gm-debug-output');
+                        if(!out) return;
+                        out.textContent='=== MERGE PLAN ===\n';
+                        out.textContent+=`Chapter: ${chapter}\n`;
+                        out.textContent+=`Unique logical mods: ${plan.length}\n\n`;
+                        for(const item of plan){
+                            out.textContent+=`${item.name}\n`;
+                            out.textContent+=`  logicalKey: ${item.logicalKey}\n`;
+                            out.textContent+=`  patches: ${item.patches.length}\n`;
+                            item.patches.forEach((p,i)=>{
+                                out.textContent+=`    ${i+1}. ${p.path||'(unknown path)'} source=${p.source||'(none)'} target=${p.target||'(none)'} checksum=${p.checksum||'(none)'}\n`;
+                            });
+                            out.textContent+='\n';
+                        }
+                        out.textContent+='This is planning data only; no merge is performed yet.\n';
+                    }catch(e){
+                        console.error('[Merge Plan]',e);
+                    }
+                };
+            }
+
+            const clearCacheBtn=document.getElementById('gm-debug-clear-cache');
+            if(clearCacheBtn) clearCacheBtn.onclick=()=>clearCompatibilityCache();
+
+            document.getElementById('gm-debug-all').onclick=async()=>{
+                try{
+                    const records=(await listStoredMods()).filter(r=>r.enabled!==false && (r.patches||[]).some(p=>String(p.chapter)===String(new URLSearchParams(location.search).get('c')||'0')));
+                    const chapter=String(new URLSearchParams(location.search).get('c')||'0');
+                    await debugAllPermutations(records,chapter);
+                }catch(e){const o=document.getElementById('gm-debug-output');if(o)o.textContent+='\nERROR: '+(e.message||e);console.error('[Stack Debug]',e);}
+            };
+        }
+
+        window.GM_MOD_MENU_OPEN=async function(){
+            const modal=document.getElementById('gm-mod-modal');
+            if(!modal) return;
+            modal.classList.add('visible'); modal.setAttribute('aria-hidden','false');
+            try { await refreshUI(); await populateStackDebugUI(); } catch(e) { setStatus('Mod database error: '+e.message); }
+        };
+        window.GM_MOD_MENU_CLOSE=function(){
+            const modal=document.getElementById('gm-mod-modal');
+            if(modal){ modal.classList.remove('visible'); modal.setAttribute('aria-hidden','true'); }
+        };
+
+        async function refreshUI(){
+            const list=document.getElementById('gm-mod-list'); if(!list) return;
+            const records=await listStoredMods(); list.innerHTML='';
+            if(!records.length){
+                list.innerHTML='<div class="gm-mod-empty">No mods installed.<br>Import a Deltamod, legacy xdelta, ZIP, or 7z mod package.</div>';
+                setStatus('Type "mod" at any time to open this menu.'); return;
+            }
+            let enabledCount=0;
+            const enabled=records.filter(r=>r.enabled!==false);
+            const assetOwners=new Map();
+            const currentChapter=String(new URLSearchParams(location.search).get('c')||'0');
+            const conflictsByMod=new Map();
+            for(const record of enabled){
+                for(const ef of (record.extraFiles||[])){
+                    if(ef.chapter!==null && ef.chapter!==undefined && String(ef.chapter)!==currentChapter) continue;
+                    const path=cleanModPath(ef.path).toLowerCase(); if(!path) continue;
+                    const prior=assetOwners.get(path);
+                    if(prior && prior!==record.name){
+                        if(!conflictsByMod.has(record.id)) conflictsByMod.set(record.id,[]);
+                        conflictsByMod.get(record.id).push(cleanModPath(ef.path));
+                    }else assetOwners.set(path,record.name);
+                }
+            }
+            records.sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id)));
+            for(const record of records){
+                if(record.enabled!==false) enabledCount++;
+                const row=document.createElement('div'); row.className='gm-mod-row';
+                const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.className='gm-mod-check'; checkbox.checked=record.enabled!==false;
+                checkbox.addEventListener('change',async()=>{ record.enabled=checkbox.checked; await putStoredMod(record); setStatus('Saved. Reload to apply changes.'); });
+                const main=document.createElement('div'); main.className='gm-mod-main';
+                const format=record.format||'Mod';
+                const chapters=[...new Set((record.patches||[]).map(p=>p.chapter))].sort().join(', ')||'asset overlay';
+                const compatibility=record.targetVersion ? `Target: Deltarune ${record.targetVersion}` : 'Target version: unknown';
+                const compat=compatibilityLabel(record);
+                const extraCount=(record.extraFiles||[]).length;
+                const conflictCount=(conflictsByMod.get(record.id)||[]).length;
+                main.innerHTML='<div class="gm-mod-name">'+escapeHTML(record.name||record.id)+'</div>'+
+                    '<div class="gm-mod-meta">'+escapeHTML(format)+' · v'+escapeHTML(record.version||'1.0')+' · Chapters: '+escapeHTML(chapters)+'</div>'+
+                    '<div class="gm-mod-meta">'+escapeHTML(compatibility)+'</div>'+
+                    '<div class="gm-mod-compat '+compat.cls+'">'+escapeHTML(compat.label)+'</div>'+
+                    (extraCount?'<div class="gm-mod-meta">External assets: '+extraCount+(conflictCount?` · ⚠ ${conflictCount} conflict(s)`: '')+'</div>':'')+
+                    '<div class="gm-mod-meta">'+escapeHTML(record.description||'No description')+'</div>';
+                if(conflictCount){
+                    const warning=document.createElement('div'); warning.className='gm-mod-conflict'; warning.textContent='Asset conflict: '+(conflictsByMod.get(record.id)||[]).join(', '); main.appendChild(warning);
+                }
+                const detailBtn=document.createElement('button'); detailBtn.type='button'; detailBtn.className='gm-mod-detail-btn'; detailBtn.textContent='Show diagnostics';
+                const diag=document.createElement('div'); diag.className='gm-mod-diag'; diag.hidden=true;
+                const patchCount=(record.patches||[]).length;
+                const extraCountForDiag=(record.extraFiles||[]).length;
+                const checks=(record.checksums||[]).length;
+                const lc=record.lastCompatibility||null;
+                const lines=[];
+                lines.push('<div><strong>Format:</strong> '+escapeHTML(format)+'</div>');
+                lines.push('<div><strong>DATA patches:</strong> '+patchCount+'</div>');
+                lines.push('<div><strong>External files:</strong> '+extraCountForDiag+'</div>');
+                lines.push('<div><strong>Declared base checksums:</strong> '+checks+'</div>');
+                if(record.targetVersion) lines.push('<div><strong>Declared target:</strong> Deltarune '+escapeHTML(record.targetVersion)+'</div>');
+                if(lc){
+                    const checked=new Date(lc.checkedAt||Date.now()).toLocaleString();
+                    lines.push('<div><strong>Last checked:</strong> '+escapeHTML(checked)+' · Chapter '+escapeHTML(lc.chapter||'?')+'</div>');
+                    if(lc.version) lines.push('<div><strong>Detected game build:</strong> '+escapeHTML(lc.version)+'</div>');
+                    if(lc.expectedHash) lines.push('<div><strong>Expected SHA-256:</strong> <code>'+escapeHTML(lc.expectedHash)+'</code></div>');
+                    if(lc.actualHash) lines.push('<div><strong>Actual SHA-256:</strong> <code>'+escapeHTML(lc.actualHash)+'</code></div>');
+                    if(lc.status==='compatible') lines.push('<div class="gm-mod-diag-ok"><strong>Result:</strong> base file matched the mod requirement.</div>');
+                    else if(lc.status==='incompatible') lines.push('<div class="gm-mod-diag-bad"><strong>Result:</strong> base file did not match the mod requirement.</div>');
+                    else if(lc.status==='applied-unverified') lines.push('<div class="gm-mod-diag-warn"><strong>Result:</strong> applied without a declared base checksum.</div>');
+                } else {
+                    lines.push('<div class="gm-mod-diag-warn"><strong>Result:</strong> this mod has not been checked against the current game chapter yet.</div>');
+                }
+                if(record.forcePatch===true) lines.push('<div class="gm-mod-diag-warn"><strong>Force Patch:</strong> enabled; checksum rejection may be bypassed.</div>');
+                diag.innerHTML=lines.join('');
+                detailBtn.addEventListener('click',()=>{diag.hidden=!diag.hidden;detailBtn.textContent=diag.hidden?'Show diagnostics':'Hide diagnostics';});
+                main.appendChild(detailBtn); main.appendChild(diag);
+                const actions=document.createElement('div'); actions.className='gm-mod-actions';
+                if((record.patches||[]).length){
+                    const forceWrap=document.createElement('label'); forceWrap.className='gm-mod-force';
+                    const force=document.createElement('input'); force.type='checkbox'; force.checked=record.forcePatch===true;
+                    const forceText=document.createElement('span'); forceText.textContent='Ignore checksum / Force Patch';
+                    const hasDeclaredChecksums=(record.checksums||[]).length>0;
+                    force.title=hasDeclaredChecksums ? 'Ignore declared base-file checksums and ask xdelta to continue anyway.' : 'This mod has no declared metadata checksum, but its xdelta patch may contain its own source check.';
+                    force.addEventListener('change',async()=>{
+                        if(force.checked && !window.confirm('Force Patch disables checksum rejection for this mod. The patch may fail or produce an unusable game archive. Enable it?')){ force.checked=false; return; }
+                        record.forcePatch=force.checked; await putStoredMod(record); setStatus(record.forcePatch?'Force Patch enabled. Reload to apply.':'Force Patch disabled. Reload to apply.');
+                    });
+                    forceWrap.append(force,forceText); actions.appendChild(forceWrap);
+                }
+                const del=document.createElement('button'); del.className='gm-mod-btn danger'; del.textContent='Remove';
+                del.onclick=async()=>{ if(!window.confirm('Remove this mod?')) return; await deleteStoredMod(record.id); await refreshUI(); };
+                actions.appendChild(del); row.append(checkbox,main,actions); list.appendChild(row);
+            }
+            setStatus(`${records.length} installed · ${enabledCount} enabled. Compatibility status updates after a chapter is checked or patched. External asset conflicts are warnings; later load-order entries currently win.`);
+        }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            const modal=document.getElementById('gm-mod-modal'), fileInput=document.getElementById('gm-mod-file');
+            document.getElementById('gm-mod-close-btn')?.addEventListener('click',window.GM_MOD_MENU_CLOSE);
+            document.getElementById('gm-mod-import-btn')?.addEventListener('click',()=>fileInput?.click());
+            document.getElementById('gm-mod-reload-btn')?.addEventListener('click',()=>location.reload());
+            fileInput?.addEventListener('change',async()=>{
+                const file=fileInput.files&&fileInput.files[0]; fileInput.value='';
+                try{ await importMod(file); await refreshUI(); }
+                catch(e){ console.error('[Mod Manager] Import failed:',e); setStatus('Import failed: '+e.message); }
+            });
+            modal?.addEventListener('click',e=>{ if(e.target===modal) window.GM_MOD_MENU_CLOSE(); });
+        });
+    })();
+    </script>
+    <style>
+        #gm-mod-modal {
+            display:none; position:fixed; inset:0; z-index:10050;
+            background:rgba(0,0,0,.82); align-items:center; justify-content:center;
+            font-family:"Lucida Console",Monaco,monospace; color:#fff;
+        }
+        #gm-mod-modal.visible { display:flex; }
+        #gm-mod-panel {
+            width:min(760px,92vw); max-height:86vh; overflow:auto;
+            background:#111; border:2px solid #20c20e; border-radius:8px;
+            box-shadow:0 8px 30px rgba(0,0,0,.65); padding:18px; box-sizing:border-box;
+        }
+        #gm-mod-panel h2 { margin:0 0 6px; font-size:22px; }
+        #gm-mod-status { color:#aaa; font-size:12px; margin-bottom:14px; white-space:pre-wrap; }
+        #gm-mod-list { border:1px solid #333; background:#090909; border-radius:5px; }
+        .gm-mod-row { padding:12px; border-bottom:1px solid #222; display:flex; gap:12px; align-items:center; }
+        .gm-mod-row:last-child { border-bottom:none; }
+        .gm-mod-main { flex:1; min-width:0; }
+        .gm-mod-name { font-weight:bold; }
+        .gm-mod-meta { color:#888; font-size:11px; margin-top:3px; overflow-wrap:anywhere; }
+        .gm-mod-actions { display:flex; gap:6px; flex-wrap:wrap; }
+        .gm-mod-btn {
+            padding:8px 12px; border:1px solid #444; border-radius:4px; cursor:pointer;
+            background:#181818; color:#fff; font-family:inherit; font-weight:bold;
+        }
+        .gm-mod-btn:hover { background:#252525; }
+        .gm-mod-btn.primary { background:#20c20e; color:#000; border-color:#20c20e; }
+        .gm-mod-btn.danger { background:#6d1727; border-color:#9b2940; }
+        .gm-mod-footer { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:14px; }
+        .gm-mod-empty { padding:18px; color:#777; text-align:center; }
+        #gm-mod-file { display:none; }
+        .gm-mod-check { width:18px; height:18px; flex:0 0 auto; }
+
+        .gm-mod-force { display:flex; align-items:center; gap:5px; color:#f0c674; font-size:11px; cursor:pointer; white-space:nowrap; }
+        .gm-mod-compat{font-size:11px;font-weight:bold;margin-top:4px}.gm-mod-compat-ok{color:#63d37a}.gm-mod-compat-bad{color:#ff7070}.gm-mod-compat-unknown{color:#d7b66a}.gm-mod-conflict{margin-top:6px;padding:6px 8px;border:1px solid #6d5724;border-radius:4px;color:#f0c674;font-size:10px;line-height:1.35;background:#17130a}.gm-mod-diag{margin-top:7px;padding:7px 9px;border:1px solid #292929;border-radius:4px;background:#0d0d0d;color:#aaa;font-size:10px;line-height:1.45}.gm-mod-diag strong{color:#ddd}.gm-mod-diag code{color:#bfc8ff;word-break:break-all}.gm-mod-diag-ok{color:#7fda93}.gm-mod-diag-bad{color:#ff8585}.gm-mod-diag-warn{color:#e1c277}.gm-mod-detail-btn{margin-top:6px;padding:3px 7px;border:1px solid #444;background:#181818;color:#ccc;border-radius:3px;font-size:10px;cursor:pointer}.gm-mod-detail-btn:hover{background:#242424}
+        .gm-mod-force input { width:16px; height:16px; }
+        .gm-mod-notice{position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:20000;max-width:min(560px,calc(100vw - 32px));padding:14px 16px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:#151515;box-shadow:0 10px 30px rgba(0,0,0,.45);color:#fff;font:14px/1.4 system-ui,sans-serif}
+        .gm-mod-notice.warn{border-color:#d6a84f}.gm-mod-notice.error{border-color:#d95c5c}.gm-mod-notice.ok{border-color:#64c27b}
+        .gm-mod-notice-title{font-weight:700;margin-bottom:6px}.gm-mod-notice-body{opacity:.92}.gm-mod-notice-close{margin-top:10px;padding:5px 10px;border:1px solid #555;border-radius:6px;background:#222;color:#fff;cursor:pointer}
+    </style>
+    <style>
             #loading-overlay {
+                pointer-events: none;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -596,6 +2930,41 @@ progress[value]::-webkit-progress-value {
         <div class="custom-message-box-content">
             <p id="messageBoxText"></p>
             <button id="messageBoxConfirmBtn">OK</button>
+        </div>
+    </div>
+
+    <div id="gm-mod-modal" aria-hidden="true">
+        <div id="gm-mod-panel">
+            <h2>Mod Manager</h2>
+            <div id="gm-mod-status">Loading installed mods...</div>
+            <div id="gm-mod-list"></div>
+            <div id="gm-mod-debug">
+                <h3>Experimental Multi-Mod Debugger</h3>
+                <div class="small" style="color:#bbb;margin-bottom:8px;">This uses the same xdelta pipeline as the game, but does <b>not</b> launch the result. Each order first tries the second patch normally; only after a checksum failure does it retry with checksum disabled. This tells us whether the order is genuinely chain-compatible or only works when forced.</div>
+                <div class="gm-debug-row">
+                    <label for="gm-debug-a">Mod A</label>
+                    <select id="gm-debug-a"></select>
+                    <label for="gm-debug-b">Mod B</label>
+                    <select id="gm-debug-b"></select>
+                </div>
+                <div class="gm-debug-row">
+                    <button class="gm-mod-btn" id="gm-debug-ab">Test A → B</button>
+                    <button class="gm-mod-btn" id="gm-debug-ba">Test B → A</button>
+                    <button class="gm-mod-btn" id="gm-debug-both">Test Both Orders</button>
+                    <button class="gm-mod-btn" id="gm-debug-all">Test All Orders (Graph Search)</button>
+<button type="button" id="gm-debug-clear-cache">Clear Compatibility Cache</button> <button type="button" id="gm-debug-merge-plan">Show Merge Plan</button> 
+<button type="button" id="GM_STACK_COPY_LOGS">Copy Logs</button>
+                </div>
+                <button type="button" id="gm-debug-copy-logs">Copy Logs</button> <pre id="gm-debug-output">No debug test run yet.</pre>
+            </div>
+            <div class="gm-mod-footer">
+                <div class="gm-mod-actions">
+                    <button class="gm-mod-btn primary" id="gm-mod-import-btn">Import Mod ZIP</button>
+                    <button class="gm-mod-btn" id="gm-mod-reload-btn">Reload &amp; Apply</button>
+                </div>
+                <button class="gm-mod-btn" id="gm-mod-close-btn">Close</button>
+            </div>
+            <input id="gm-mod-file" type="file" accept=".zip,.7z,.deltamod,application/zip,application/x-7z-compressed">
         </div>
     </div>
 
@@ -748,6 +3117,7 @@ progress[value]::-webkit-progress-value {
             }
             
             function showUI() {
+                document.getElementById('loading-overlay').style.display = 'none'; // <-- Hides overlay
                 document.getElementById('output-container').classList.add('visible');
                 document.getElementById('message-container').classList.remove('hidden-ui');
                 document.getElementById('closeUIButton').style.display = 'block';
@@ -884,6 +3254,36 @@ progress[value]::-webkit-progress-value {
                     Module.setStatus(left ? "Preparing... (" + (this.totalDependencies - left) + "/" + this.totalDependencies + ")" : "All downloads complete.");
                 },
             };
+            Module.preRun.push(function() {
+              try {
+                  Module.FS_createPath("/", "mus", true, true);
+          
+                  const b64 =
+                      "T2dnUwACAAAAAAAAAABVD34AAAAAAACTh3YCAXZvcmJpczAAAAAAV2ViT3BlbkZvbnRGaWxlcwAAAAAAMzg0AAAAAAN2b3JiaXMsAAAAYXJ0aXN0PUF1ZGFjaXR5AAAAAG9nZ1ZvcmJpc0NvZGVjAEEA4ABEEACg0ABpA8CA";
+          
+                  const binary = atob(b64);
+                  const bytes = new Uint8Array(binary.length);
+          
+                  for (let i = 0; i < binary.length; i++) {
+                      bytes[i] = binary.charCodeAt(i);
+                  }
+          
+                  Module.FS_createDataFile(
+                      "/mus",
+                      "Flowerman_Arrangement.ogg",
+                      bytes,
+                      true,
+                      true,
+                      true
+                  );
+          
+                  console.log(
+                      "[Flowerman FS] Dummy Flowerman file injected during preRun."
+                  );
+              } catch (e) {
+                  console.error("[Flowerman FS] Injection failed:", e);
+              }
+          });
             Module.setStatus("Downloading...");
             window.onerror = function(event) {
                 spinnerElement.style.display = "none";
@@ -959,7 +3359,7 @@ progress[value]::-webkit-progress-value {
                         console.log('Loading stats.js library...');
                         
                         const script = document.createElement('script');
-                        script.src = 'https://mrdoob.github.io/stats.js/build/stats.min.js';
+                        script.src = 'https://cdn.jsdelivr.net/gh/mrdoob/stats.js@master/build/stats.min.js';
                         
                         script.onload = init;
                         
@@ -1129,54 +3529,102 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             const runnerScriptUrl = window.GM_RUNNER_SCRIPT || 'runner.js';
             const chapterAssetPrefix = window.GM_CHAPTER_ASSET_PREFIX || '';
             const chapterExternalFiles = window.GM_CHAPTER_EXTERNAL_FILES || [];
+            function canonicalManifestPath(path, manifest) {
+                return manifest.find(p =>
+                    typeof p === 'string' && p.toLowerCase() === path.toLowerCase()
+                );
+            }
 
             function resolveChapterAssetUrl(url) {
-                if (!chapterAssetPrefix || typeof url !== 'string') return url;
+                if (typeof url !== 'string') return url;
+
+                // GameMaker audio_create_stream() uses an internal target prefix
+                // (ta///) when requesting streamed files. It is not a real web path.
+                const taPrefix = 'ta///';
+                if (url.startsWith(taPrefix)) {
+                  console.log('[Audio Stream Fix] Removing internal target prefix:', url);
+                  url = url.slice(taPrefix.length);
+              
+                  const path = url
+                      .split(/[?#]/)[0]
+                      .replace(/^\/+/, '');
+              
+                  const manifest = Array.isArray(window.GM_EXTERNAL_FILES)
+                      ? window.GM_EXTERNAL_FILES
+                      : [];
+              
+                  const canonicalPath = canonicalManifestPath(path, manifest) || path;
+              
+                  const suffixMatch = url.match(/[?#].*$/);
+                  const suffix = suffixMatch ? suffixMatch[0] : '';
+              
+                  const rawUrl =
+                      window.GM_RAW_GITHUB_BASE + canonicalPath +
+                      suffix;
+              
+                  console.log('[Audio Stream Fix] Direct stream URL:', rawUrl);
+                  return rawUrl;
+              }
+
                 const queryIndex = url.search(/[?#]/);
-                const path = (queryIndex === -1 ? url : url.slice(0, queryIndex))
+                let path = (queryIndex === -1 ? url : url.slice(0, queryIndex))
                     .replace(/^\.\//, '')
                     .replace(/^\//, '');
-                if (!chapterExternalFiles.includes(path)) return url;
-                const suffix = queryIndex === -1 ? '' : url.slice(queryIndex);
-                return `${chapterAssetPrefix}/${path}${suffix}`;
+
+                // The stream loader lowercases filenames. GitHub/JSDelivr paths are
+                // case-sensitive, so recover the canonical manifest spelling.
+                const manifest = Array.isArray(window.GM_EXTERNAL_FILES)
+                    ? window.GM_EXTERNAL_FILES
+                    : [];
+                const canonicalPath = canonicalManifestPath(path, manifest);
+                if (canonicalPath) {
+                    if (canonicalPath !== path) {
+                        console.log('[Audio Stream Fix] Restoring asset case:', path, '->', canonicalPath);
+                    }
+                    path = canonicalPath;
+                }
+
+                if (!chapterAssetPrefix) return path + (queryIndex === -1 ? '' : url.slice(queryIndex));
+
+                const chapterCanonicalPath = chapterExternalFiles.find(p =>
+                    typeof p === 'string' && p.toLowerCase() === path.toLowerCase()
+                );
+
+                if (chapterCanonicalPath) {
+                    path = chapterCanonicalPath;
+                    const suffix = queryIndex === -1 ? '' : url.slice(queryIndex);
+                    return `${chapterAssetPrefix}/${path}${suffix}`;
+                }
+
+                return url;
             }
             
-            // --- Interception Logic ---
-            // Intercept 'fetch' requests
-            const originalFetch = window.fetch;
-            window.fetch = async function (url, ...args) {
-                if (url.endsWith("game.unx")) {
-                    return originalFetch(gameUnxUrl, ...args);
-                } else if (url.endsWith("runner.data")) {
-                    return originalFetch(runnerDataUrl, ...args);
-                }
-                return originalFetch(resolveChapterAssetUrl(url), ...args);
+            // Share the chapter resolver with the single global fetch interceptor.
+            // This avoids stacking a second fetch monkey-patch on top of the cache layer.
+            window.GM_RESOLVE_ASSET_URL = function(url) {
+                if (typeof url !== 'string') return url;
+                if (url.endsWith("game.unx")) return gameUnxUrl;
+                if (url.endsWith("runner.data")) return runnerDataUrl;
+                return resolveChapterAssetUrl(url);
             };
-            
-            // Intercept 'XMLHttpRequest' requests
+
+            // Intercept XMLHttpRequest requests separately; XHR does not use fetch().
             const originalOpen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-                let newUrl = url;
-                if (url.endsWith("game.unx")) {
-                    newUrl = gameUnxUrl;
-                } else if (url.endsWith("runner.data")) {
-                    newUrl = runnerDataUrl;
-                } else {
-                    newUrl = resolveChapterAssetUrl(url);
-                }
+                const newUrl = window.GM_RESOLVE_ASSET_URL(url);
                 return originalOpen.call(this, method, newUrl, ...rest);
             };
             
             async function startRunner() {
-                if (gameArchiveChunks.length > 1) {
-                    const archiveParts = await Promise.all(gameArchiveChunks.map(async (chunkUrl) => {
-                        const response = await originalFetch(chunkUrl);
-                        if (!response.ok) throw new Error(`Unable to load archive chunk: ${chunkUrl}`);
-                        return response.arrayBuffer();
-                    }));
-                    gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
+                const currentChapter=String(activeDeltaruneChapter);
+                const storedMods=window.GM_MODS_READY && typeof window.GM_MODS_READY.then==='function' ? await window.GM_MODS_READY : [];
+                const hasChapterPatch=storedMods.some(r=>r.enabled!==false && Array.isArray(r.patches) && r.patches.some(p=>String(p.chapter)===currentChapter));
+                if (gameArchiveChunks.length > 1 || hasChapterPatch) {
+                    const prepared=await window.GM_MOD_PREPARE_ARCHIVE(gameArchiveChunks,currentChapter);
+                    gameUnxUrl=URL.createObjectURL(prepared instanceof Blob ? prepared : new Blob([prepared], { type: 'application/octet-stream' }));
                 }
 
+                console.log('[Mod Manager] Archive preparation complete; launching', runnerScriptUrl);
                 const runnerScript = document.createElement("script");
                 runnerScript.src = runnerScriptUrl;
                 document.body.appendChild(runnerScript);
@@ -1238,67 +3686,175 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 }
                 const DB_NAME = '/_savedata';
                 const STORE_NAME = 'FILE_DATA';
-                const DB_VERSION = 21;
-                let db;
+                const DB_VERSION = null;
+                const MANAGER_SAVE_PREFIX = "DELTARUNE_SAVE_";
+                let db = null;
+                let dbUnavailable = false;
+                let dbWarningShown = false;
+
+                function bytesToBase64(bytes) {
+                    let binary = "";
+                    const chunkSize = 0x8000;
+                    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                        const end = Math.min(offset + chunkSize, bytes.length);
+                        let chunk = "";
+                        for (let i = offset; i < end; i++) chunk += String.fromCharCode(bytes[i]);
+                        binary += chunk;
+                    }
+                    return btoa(binary);
+                }
+
+                function base64ToBytes(b64) {
+                    const binary = atob(b64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    return bytes;
+                }
+
+                function localStorageSaveFiles() {
+                    const files = [];
+                    try {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (!key || !key.startsWith(MANAGER_SAVE_PREFIX)) continue;
+                            const fileName = key.slice(MANAGER_SAVE_PREFIX.length);
+                            const b64 = localStorage.getItem(key);
+                            if (!fileName || !b64) continue;
+                            files.push({
+                                name: savePathForName(fileName),
+                                data: {
+                                    timestamp: new Date(0),
+                                    mode: 33206,
+                                    contents: base64ToBytes(b64)
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.warn("[Save Manager] LocalStorage fallback read failed:", error);
+                    }
+                    return files;
+                }
+
+                function mergeSaveFiles(primaryFiles) {
+                    const merged = new Map(primaryFiles.map(file => [file.name, file]));
+                    for (const file of localStorageSaveFiles()) {
+                        if (!merged.has(file.name)) merged.set(file.name, file);
+                    }
+                    return Array.from(merged.values());
+                }
+
+                function fsSaveFiles() {
+                    const files = new Map();
+                    const bridge = window.GM_SAVE_FS;
+                    if (!bridge || typeof bridge.list !== 'function') return [];
+                    try {
+                        for (const entry of bridge.list()) {
+                            const name = entry.path;
+                            files.set(name, {
+                                name,
+                                data: {
+                                    timestamp: new Date(),
+                                    mode: 33206,
+                                    contents: entry.contents
+                                }
+                            });
+                        }
+                    } catch (_) {}
+                    return Array.from(files.values());
+                }
+
+                function savePathForName(fileName) {
+                    const name = String(fileName).replace(/^\/_savedata\//, '').replace(/^\//, '');
+                    return `/_savedata/${name}`;
+                }
+
                 async function openIndexedDB() {
                     if (db) return db;
+                    if (dbUnavailable) return null;
                     if (!window.indexedDB) {
-                        showMessageBox("Your browser doesn't support IndexedDB. Save manager will not work.");
-                        throw new Error("IndexedDB not supported.");
+                        dbUnavailable = true;
+                        if (!dbWarningShown) {
+                            console.warn("[Save Manager] IndexedDB unavailable; using LocalStorage fallback.");
+                            dbWarningShown = true;
+                        }
+                        return null;
                     }
-                    return new Promise((resolve, reject) => {
-                        const request = indexedDB.open(DB_NAME, DB_VERSION);
-                        request.onerror = (event) => {
-                            //console.error("IndexedDB error:", event.target.error);
-                            //showMessageBox("Error opening IndexedDB: " + (event.target.error ? event.target.error.message : "Unknown error"));
-                            reject("Error opening IndexedDB.");
-                        };
-                        request.onsuccess = (event) => {
-                            db = event.target.result;
-                            console.log("IndexedDB opened successfully.");
-                            resolve(db);
-                        };
-                        request.onupgradeneeded = (event) => {
-                            db = event.target.result;
-                            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                                db.createObjectStore(STORE_NAME);
-                                console.log(`Object store '${STORE_NAME}' created.`);
+                    return new Promise((resolve) => {
+                        let settled = false;
+                        const fail = (reason) => {
+                            dbUnavailable = true;
+                            if (!dbWarningShown) {
+                                console.warn("[Save Manager] IndexedDB unavailable; using LocalStorage fallback:", reason || "unknown error");
+                                dbWarningShown = true;
+                            }
+                            if (!settled) {
+                                settled = true;
+                                resolve(null);
                             }
                         };
+                        try {
+                            const request = DB_VERSION == null ? indexedDB.open(DB_NAME) : indexedDB.open(DB_NAME, DB_VERSION);
+                            request.onerror = (event) => fail(event.target && event.target.error);
+                            request.onblocked = () => fail("request blocked");
+                            request.onsuccess = (event) => {
+                                if (settled) return;
+                                settled = true;
+                                db = event.target.result;
+                                db.onclose = () => {
+                                    db = null;
+                                    dbUnavailable = true;
+                                };
+                                db.onversionchange = () => {
+                                    try { db.close(); } catch (_) {}
+                                    db = null;
+                                    dbUnavailable = true;
+                                };
+                                console.log("IndexedDB opened successfully.");
+                                resolve(db);
+                            };
+                            request.onupgradeneeded = (event) => {
+                                const upgradeDb = event.target.result;
+                                if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
+                                    upgradeDb.createObjectStore(STORE_NAME);
+                                    console.log(`Object store '${STORE_NAME}' created.`);
+                                }
+                            };
+                        } catch (error) {
+                            fail(error);
+                        }
                     });
                 }
                 async function getSaveFiles() {
+                    const fsFiles = fsSaveFiles();
+                    if (fsFiles.length) {
+                        return mergeSaveFiles(fsFiles);
+                    }
                     try {
-                        await openIndexedDB();
-                        const transaction = db.transaction([STORE_NAME], 'readonly');
+                        const activeDb = await openIndexedDB();
+                        if (!activeDb || !activeDb.objectStoreNames.contains(STORE_NAME)) {
+                            return localStorageSaveFiles();
+                        }
+                        const transaction = activeDb.transaction([STORE_NAME], 'readonly');
                         const objectStore = transaction.objectStore(STORE_NAME);
                         const request = objectStore.getAll();
-                        return new Promise((resolve, reject) => {
+                        const idbFiles = await new Promise((resolve, reject) => {
                             request.onsuccess = (event) => {
-                                const files = event.target.result;
+                                const files = event.target.result || [];
                                 const fileNamesRequest = objectStore.getAllKeys();
                                 fileNamesRequest.onsuccess = (eventKeys) => {
-                                    const fileNames = eventKeys.target.result;
-                                    const result = files.map((file, index) => ({
-                                        name: fileNames[index],
-                                        data: file
-                                    }));
-                                    resolve(result);
+                                    const fileNames = eventKeys.target.result || [];
+                                    resolve(files.map((file, index) => ({ name: savePathForName(fileNames[index]), data: file })));
                                 };
-                                fileNamesRequest.onerror = (eventKeys) => {
-                                    console.error("Error getting file names:", eventKeys.target.error);
-                                    reject("Error getting file names: " + (eventKeys.target.error ? eventKeys.target.error.message : "Unknown error"));
-                                };
+                                fileNamesRequest.onerror = (eventKeys) => reject(eventKeys.target.error || new Error("Unable to get save names."));
                             };
-                            request.onerror = (event) => {
-                                console.error("Error getting save files from object store:", event.target.error);
-                                reject("Error getting save files: " + (event.target.error ? event.target.error.message : "Unknown error"));
-                            };
+                            request.onerror = (event) => reject(event.target.error || new Error("Unable to get save files."));
                         });
+                        return mergeSaveFiles(idbFiles);
                     } catch (error) {
-                        console.error("Error in getSaveFiles:", error);
-                        showMessageBox("Failed to retrieve save files: " + error.message);
-                        return [];
+                        db = null;
+                        dbUnavailable = true;
+                        console.warn("[Save Manager] IndexedDB read failed; using LocalStorage fallback:", error);
+                        return localStorageSaveFiles();
                     }
                 }
                 async function displaySaveFiles() {
@@ -1387,26 +3943,31 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     showMessageBox(`File "${fileName}" downloaded.`);
                 }
                 async function deleteSaveFile(fileName) {
+                    const normalizedName = String(fileName).replace(/^\/_savedata\//, '').replace(/^\//, '');
                     try {
-                        await openIndexedDB();
-                        const transaction = db.transaction([STORE_NAME], 'readwrite');
-                        const objectStore = transaction.objectStore(STORE_NAME);
-                        const request = objectStore.delete(fileName);
-                        return new Promise((resolve, reject) => {
-                            request.onsuccess = () => {
-                                showMessageBox(`File "${fileName}" deleted successfully.`);
-                                displaySaveFiles();
-                                resolve();
-                            };
-                            request.onerror = (event) => {
-                                console.error("Error deleting file:", event.target.error);
-                                showMessageBox(`Error deleting file "${fileName}": ` + (event.target.error ? event.target.error.message : "Unknown error"));
-                                reject("Error deleting file.");
-                            };
-                        });
+                        const bridge = window.GM_SAVE_FS;
+                        if (bridge && typeof bridge.remove === 'function') {
+                            for (const path of [`/${normalizedName}`, `/_savedata/${normalizedName}`]) {
+                                bridge.remove(path);
+                            }
+                        }
+
+                        localStorage.removeItem(MANAGER_SAVE_PREFIX + normalizedName);
+
+                        if (db && !dbUnavailable && db.objectStoreNames.contains(STORE_NAME)) {
+                            try {
+                                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                                const store = transaction.objectStore(STORE_NAME);
+                                store.delete(savePathForName(normalizedName));
+                                store.delete(normalizedName);
+                            } catch (_) {}
+                        }
+
+                        showMessageBox(`File "${normalizedName}" deleted successfully.`);
+                        displaySaveFiles();
                     } catch (error) {
-                        console.error("Error in deleteSaveFile:", error);
-                        showMessageBox("Failed to delete save file: " + error.message);
+                        console.error("[Save Manager] Delete failed:", error);
+                        showMessageBox(`Failed to delete save file "${normalizedName}".`);
                     }
                 }
                 async function handleUpload() {
@@ -1437,8 +3998,9 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                                 mode: 33206,
                                 contents: uint8ArrayContents
                             };
-                            const finalFileName = `/_savedata/${fileName}`;
-                            uploadPromises.push(saveSaveFile(finalFileName, saveObject));
+                            const targetPath = savePathForName(fileName);
+                            console.log(`[Save Manager] Importing ${file.name} -> ${targetPath}`);
+                            uploadPromises.push(saveSaveFile(targetPath, saveObject));
                         }
                         await Promise.all(uploadPromises);
                         showMessageBox(`${files.length} file(s) uploaded and saved successfully.`);
@@ -1484,25 +4046,58 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     }
                 }
                 async function saveSaveFile(fileName, data) {
+                    const normalizedName = String(fileName).replace(/^\/_savedata\//, '').replace(/^\//, '');
+                    const contents = data.contents || new Uint8Array();
+                    const targetPath = savePathForName(normalizedName);
+
+                    // Prefer Emscripten's exported filesystem helpers. In this runner
+                    // FS is not exposed as window.FS, but Module.FS_* functions are.
                     try {
-                        await openIndexedDB();
-                        const transaction = db.transaction([STORE_NAME], 'readwrite');
-                        const objectStore = transaction.objectStore(STORE_NAME);
-                        const request = objectStore.put(data, fileName);
-                        return new Promise((resolve, reject) => {
-                            request.onsuccess = () => {
-                                resolve();
-                            };
-                            request.onerror = (event) => {
-                                console.error("Error saving file:", event.target.error);
-                                showMessageBox("Error saving file: " + (event.target.error ? event.target.error.message : "Unknown error"));
-                                reject("Error saving file.");
-                            };
-                        });
+                        const bridge = window.GM_SAVE_FS;
+                        if (bridge && typeof bridge.write === 'function') {
+                            bridge.write(targetPath, contents);
+                            console.log(`[Save Manager] Imported into game FS: ${targetPath}`);
+
+                            // Persist the exact imported bytes as the fallback copy.
+                            try {
+                                localStorage.setItem(
+                                    MANAGER_SAVE_PREFIX + normalizedName,
+                                    bytesToBase64(contents instanceof Uint8Array ? contents : new Uint8Array(contents))
+                                );
+                            } catch (backupError) {
+                                console.warn('[Save Manager] LocalStorage backup failed after FS import:', backupError);
+                            }
+
+                            // Remove an older incorrectly placed root-level copy.
+                            if ((/^filech\d+_\d+$/i.test(normalizedName) || normalizedName.toLowerCase() === 'dr.ini') &&
+                                typeof bridge.remove === 'function') {
+                                bridge.remove('/' + normalizedName);
+                            }
+                            return;
+                        }
                     } catch (error) {
-                        console.error("Error in saveSaveFile:", error);
-                        showMessageBox("Failed to save file: " + error.message);
+                        console.warn('[Save Manager] Emscripten FS import failed; trying IndexedDB/LocalStorage:', error);
                     }
+
+                    try {
+                        const activeDb = await openIndexedDB();
+                        if (activeDb && activeDb.objectStoreNames.contains(STORE_NAME)) {
+                            const transaction = activeDb.transaction([STORE_NAME], 'readwrite');
+                            // Preserve the original working importer key format.
+                            const request = transaction.objectStore(STORE_NAME).put(data, targetPath);
+                            await new Promise((resolve, reject) => {
+                                request.onsuccess = resolve;
+                                request.onerror = (event) => reject(event.target.error || new Error("Unable to save file."));
+                            });
+                            return;
+                        }
+                    } catch (error) {
+                        db = null;
+                        dbUnavailable = true;
+                        console.warn("[Save Manager] IndexedDB save failed; using LocalStorage fallback:", error);
+                    }
+
+                    localStorage.setItem(MANAGER_SAVE_PREFIX + normalizedName, bytesToBase64(data.contents || new Uint8Array()));
                 }
                 async function openSaveManager() {
                     const saveManagerModal = document.getElementById('saveManagerModal');
@@ -1534,7 +4129,6 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     const uploadFileInput = document.getElementById('uploadFileInput');
                     
                     if (uploadFileInput && uploadFileNameInput) {
-                        if (uploadFileInput && uploadFileNameInput) {
                             uploadFileInput.addEventListener('change', () => {
                                 if (uploadFileInput.files.length === 1) {
                                     uploadFileNameInput.disabled = false;
@@ -1546,7 +4140,6 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                                     uploadFileNameInput.placeholder = 'Custom filenames do not work when selecting multiple files!';
                                 }
                             });
-                        }
                     }
                     if (uploadFileNameInput) {
                         window.addEventListener('keydown', protectInputFromGame, true);
@@ -1566,11 +4159,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 };
             })();
             window.addEventListener('load', async () => {
-                try {
-                    await window.DeltaruneSaveManager.openIndexedDB();
-                } catch (error) {
-                    console.error("Failed to initialize IndexedDB on load:", error);
-                }
+                // Save Manager uses Emscripten FS first; IndexedDB is only an optional fallback.
             });
         </script>
         
@@ -1915,6 +4504,49 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 }
             };
         </script>
+
+<script>
+(function(){
+ const btn=document.getElementById("GM_STACK_COPY_LOGS"); if(!btn)return;
+ function logs(){
+  for(const sel of ["#debugConsole","#console","#debug-console","textarea[readonly]","textarea","pre"]){
+   const el=document.querySelector(sel); if(!el)continue;
+   const t=("value"in el?el.value:el.textContent||"").trim(); if(t)return t;
+  }
+  for(const k of ["GM_DEBUG_LOGS","DEBUG_LOGS","debugLogs","consoleLogs"]){
+   const v=window[k]; if(Array.isArray(v)&&v.length)return v.join("\n"); if(typeof v==="string"&&v.trim())return v;
+  } return "";
+ }
+ btn.addEventListener("click",async()=>{
+  const t=logs(); if(!t){btn.textContent="No Logs";setTimeout(()=>btn.textContent="Copy Logs",1200);return;}
+  try{await navigator.clipboard.writeText(t);btn.textContent="Copied!";}catch{
+   const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();
+   let ok=false;try{ok=document.execCommand("copy")}catch{}ta.remove();btn.textContent=ok?"Copied!":"Copy Failed";
+  } setTimeout(()=>btn.textContent="Copy Logs",1200);
+ });
+})();
+</script>
+
+<script>
+(function(){
+  const b=document.getElementById('gm-debug-copy-logs');
+  if(!b) return;
+  b.addEventListener('click', async ()=>{
+    const el=document.getElementById('gm-debug-output');
+    const text=el ? (el.value ?? el.textContent ?? '') : '';
+    if(!text.trim()){ b.textContent='No Logs'; setTimeout(()=>b.textContent='Copy Logs',1000); return; }
+    try{ await navigator.clipboard.writeText(text); b.textContent='Copied!'; }
+    catch{
+      const ta=document.createElement('textarea'); ta.value=text;
+      ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select();
+      let ok=false; try{ok=document.execCommand('copy')}catch{}
+      ta.remove(); b.textContent=ok?'Copied!':'Copy Failed';
+    }
+    setTimeout(()=>b.textContent='Copy Logs',1200);
+  });
+})();
+</script>
 </body>
 
 </html>
