@@ -476,7 +476,7 @@ public static partial class ResourceImportService
                     ts.Smooth = GetJsonValue(root, "smooth", ts.Smooth);
                     ts.Preload = GetJsonValue(root, "preload", ts.Preload);
                     if (root.TryGetProperty("gms2UnknownAlways2", out _))
-                        ts.GMS2UnknownAlways2 = GetJsonValue(root, "gms2UnknownAlways2", ts.GMS2UnknownAlways2);
+                        ts.GMS2TilesetVersion = GetJsonValue(root, "gms2UnknownAlways2", ts.GMS2TilesetVersion);
                     ts.GMS2TileWidth = GetJsonValue(root, "gms2TileWidth", ts.GMS2TileWidth);
                     ts.GMS2TileHeight = GetJsonValue(root, "gms2TileHeight", ts.GMS2TileHeight);
                     ts.GMS2OutputBorderX = GetJsonValue(root, "gms2OutputBorderX", ts.GMS2OutputBorderX);
@@ -485,7 +485,14 @@ public static partial class ResourceImportService
                     ts.GMS2ItemsPerTileCount = GetJsonValue(root, "gms2ItemsPerTileCount", ts.GMS2ItemsPerTileCount);
                     ts.GMS2TileCount = GetJsonValue(root, "gms2TileCount", ts.GMS2TileCount);
                     if (root.TryGetProperty("gms2ExportedSpriteIndex", out _))
-                        ts.GMS2ExportedSpriteIndex = GetJsonValue(root, "gms2ExportedSpriteIndex", ts.GMS2ExportedSpriteIndex);
+                    {
+                        int spriteIndex = GetJsonValue<int>(root, "gms2ExportedSpriteIndex", -1);
+
+                        if (spriteIndex >= 0 && spriteIndex < data.Sprites.Count)
+                            ts.GMS2ExportedSprite = data.Sprites[spriteIndex];
+                        else
+                            ts.GMS2ExportedSprite = null;
+                    }
                     ts.GMS2FrameLength = GetJsonValue(root, "gms2FrameLength", ts.GMS2FrameLength);
 
                     if (data.IsVersionAtLeast(2024, 14, 1))

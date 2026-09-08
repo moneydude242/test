@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\G3MTool-Deltamod\G3MToolCLI\Lib\UndertaleModLib\UndertaleModLib.csproj" />
+    <ProjectReference Include="..\UndertaleModTool\UndertaleModLib\UndertaleModLib.csproj" />
     <ProjectReference Include="..\G3MTool-Deltamod\G3MToolCLI\Lib\Underanalyzer\Underanalyzer\Underanalyzer.csproj" />
   </ItemGroup>
 

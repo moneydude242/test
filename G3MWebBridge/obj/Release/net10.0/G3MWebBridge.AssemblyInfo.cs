@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("G3MWebBridge")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be6102c894f9dc3f7259fc67baea9bddc013ecc2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ac2dd15537fea229b653047acd54cd418b457fe4")]
 [assembly: System.Reflection.AssemblyProductAttribute("G3MWebBridge")]
 [assembly: System.Reflection.AssemblyTitleAttribute("G3MWebBridge")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1014,6 +1014,521 @@ public partial class PatchService
         }
     }
 
+    public static async Task<PatchApplyResult> ApplyPatchToDataAsync(
+    UndertaleData data,
+    PatchFileSystem pfs)
+{
+    try
+    {
+        LogService.SetOperation("Applying patch");
+        LogService.Progress(0, 100);
+
+        LogService.Log("[PatchService] Applying semantic patch to existing UndertaleData...");
+
+        G3MPatchManifest? manifest = pfs.Manifest;
+
+        if (manifest != null)
+        {
+            LogService.Log(
+                $"[PatchService] Patch version: {manifest.Version}");
+        }
+
+        ResourceImportService.SetPatchFileSystem(pfs);
+
+        try
+        {
+            var importOrder = ResourceTypeRegistry.ImportOrder;
+            var existingFolders = pfs.GetResourceTypes();
+
+            var resourceTypesToProcess =
+                new List<string>(importOrder.Length);
+
+            foreach (var rt in importOrder)
+            {
+                if (existingFolders.Contains(rt))
+                    resourceTypesToProcess.Add(rt);
+            }
+
+            if (resourceTypesToProcess.Remove("GeneralInfo"))
+                resourceTypesToProcess.Insert(0, "GeneralInfo");
+
+            LogService.Log(
+                $"[PatchService] Resources to process: " +
+                $"{string.Join(", ", resourceTypesToProcess)}");
+
+            if (resourceTypesToProcess.Count == 0)
+            {
+                LogService.Log("[PatchService] No resources to apply");
+                return new PatchApplyResult
+                {
+                    Success = true
+                };
+            }
+
+            var resourceWeights = new Dictionary<string, int>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                ["AudioGroups"] = 1,
+                ["TextureGroupInfo"] = 1,
+                ["Sprites"] = 5,
+                ["Fonts"] = 1,
+                ["Sounds"] = 1,
+                ["Paths"] = 1,
+                ["Shaders"] = 1,
+                ["GameObjects"] = 2,
+                ["Rooms"] = 4,
+                ["Tilesets"] = 1,
+                ["GeneralInfo"] = 1
+            };
+
+            int totalNonCodeWeight = 0;
+
+            foreach (var rt in resourceTypesToProcess)
+            {
+                if (rt != "CodeEntries")
+                {
+                    totalNonCodeWeight +=
+                        resourceWeights.GetValueOrDefault(rt, 1);
+                }
+            }
+
+            bool hasCodeEntries =
+                resourceTypesToProcess.Contains("CodeEntries");
+
+            int nonCodeRangeStart = 5;
+            int nonCodeRangeEnd =
+                hasCodeEntries ? 40 : 90;
+
+            int nonCodeRange =
+                nonCodeRangeEnd - nonCodeRangeStart;
+
+            int nonCodeProgress = 0;
+
+            int appliedCount = 0;
+            int failedCount = 0;
+
+            var helpersDir = pfs.HelpersPrefix;
+
+            foreach (var resourceType in resourceTypesToProcess)
+            {
+                if (resourceType == "CodeEntries")
+                {
+                    var assetOrderFile =
+                        Path.Combine(
+                            helpersDir,
+                            "asset_order.txt");
+
+                    if (pfs.FileExists(assetOrderFile))
+                    {
+                        var aoLines =
+                            pfs.ReadAllLines(assetOrderFile);
+
+                        bool inObjects = false;
+
+                        var orderNameCounts =
+                            new Dictionary<string, int>();
+
+                        foreach (var aoLine in aoLines)
+                        {
+                            if (aoLine.StartsWith("@@"))
+                            {
+                                inObjects =
+                                    aoLine == "@@objects@@";
+                                continue;
+                            }
+
+                            if (!inObjects ||
+                                string.IsNullOrWhiteSpace(aoLine))
+                            {
+                                continue;
+                            }
+
+                            string objName = aoLine.Trim();
+
+                            if (objName == "(null)" ||
+                                int.TryParse(objName, out _))
+                            {
+                                continue;
+                            }
+
+                            orderNameCounts[objName] =
+                                orderNameCounts.GetValueOrDefault(objName) + 1;
+                        }
+
+                        var existingCounts =
+                            new Dictionary<string, int>();
+
+                        foreach (var obj in data.GameObjects)
+                        {
+                            if (obj?.Name?.Content != null)
+                            {
+                                existingCounts[obj.Name.Content] =
+                                    existingCounts.GetValueOrDefault(
+                                        obj.Name.Content) + 1;
+                            }
+                        }
+
+                        int createdObjects = 0;
+
+                        foreach (var (objName, needed) in orderNameCounts)
+                        {
+                            int have =
+                                existingCounts.GetValueOrDefault(objName);
+
+                            for (int ci = have; ci < needed; ci++)
+                            {
+                                var newObj =
+                                    new UndertaleGameObject
+                                    {
+                                        Name =
+                                            data.Strings.MakeString(objName)
+                                    };
+
+                                data.GameObjects.Add(newObj);
+                                createdObjects++;
+                            }
+                        }
+
+                        if (createdObjects > 0)
+                        {
+                            LogService.Log(
+                                $"[PatchService] Created " +
+                                $"{createdObjects} missing GameObjects " +
+                                $"from TARGET order");
+                        }
+
+                        LogService.Log(
+                            "[PatchService] Reordering assets " +
+                            "to match TARGET order...");
+
+                        try
+                        {
+                            var reorderDir =
+                                Path.Combine(
+                                    Path.GetTempPath(),
+                                    $"g3mtool_aoreorder_{Guid.NewGuid():N}");
+
+                            Directory.CreateDirectory(reorderDir);
+
+                            var filteredAoLines =
+                                FilterAssetOrderSections(
+                                    aoLines,
+                                    "TexturePageItems",
+                                    "EmbeddedTextures");
+
+                            File.WriteAllLines(
+                                Path.Combine(
+                                    reorderDir,
+                                    "asset_order.txt"),
+                                filteredAoLines);
+
+                            var objEventsPath =
+                                Path.Combine(
+                                    helpersDir,
+                                    "object_events.json");
+
+                            if (pfs.FileExists(objEventsPath))
+                            {
+                                File.WriteAllBytes(
+                                    Path.Combine(
+                                        reorderDir,
+                                        "object_events.json"),
+                                    pfs.ReadAllBytes(objEventsPath));
+                            }
+
+                            ResourceImportService.SetPatchFileSystem(null);
+
+                            ResourceImportService.ImportAssetOrder(
+                                data,
+                                reorderDir);
+
+                            ResourceImportService.SetPatchFileSystem(pfs);
+
+                            appliedCount++;
+
+                            try
+                            {
+                                Directory.Delete(
+                                    reorderDir,
+                                    true);
+                            }
+                            catch
+                            {
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogService.Log(
+                                $"[PatchService] Asset reorder warning: " +
+                                $"{ex.Message}");
+                        }
+                    }
+
+                    LogService.Progress(45, 100);
+                }
+
+                if (resourceType == "CodeEntries")
+                {
+                    string? vfContent = null;
+
+                    var vfPath =
+                        Path.Combine(
+                            helpersDir,
+                            "variables_functions.json");
+
+                    if (pfs.FileExists(vfPath))
+                    {
+                        vfContent =
+                            pfs.ReadAllText(vfPath);
+                    }
+
+                    ResourceImportService.SetPatchFileSystem(null);
+
+                    pfs.ReleaseFileData();
+
+                    GC.Collect(
+                        2,
+                        GCCollectionMode.Aggressive,
+                        true,
+                        true);
+
+                    LogService.Log(
+                        "[PatchService] Released PFS file data.");
+
+                    try
+                    {
+                        LogService.Log(
+                            $"[PatchService] Using " +
+                            $"{pfs.GmlEntries.Count} GML + " +
+                            $"{pfs.AsmEntries.Count} ASM entries.");
+
+                        ImportCodeEntriesDirect(
+                            data,
+                            pfs.GmlEntries,
+                            pfs.AsmEntries,
+                            helpersDir,
+                            vfContent);
+
+                        appliedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.Warning(
+                            $"ERROR applying CodeEntries: {ex.Message}");
+
+                        failedCount++;
+                    }
+
+                    pfs.ReleaseCodeEntries();
+
+                    GC.Collect(
+                        2,
+                        GCCollectionMode.Aggressive,
+                        true,
+                        true);
+
+                    LogService.Progress(90, 100);
+                    continue;
+                }
+
+                var resourceDir = resourceType;
+
+                if (!pfs.DirectoryExists(resourceDir))
+                {
+                    nonCodeProgress +=
+                        resourceWeights.GetValueOrDefault(
+                            resourceType,
+                            1);
+
+                    LogService.Progress(
+                        nonCodeRangeStart +
+                        nonCodeRange *
+                        nonCodeProgress /
+                        Math.Max(totalNonCodeWeight, 1),
+                        100);
+
+                    continue;
+                }
+
+                LogService.Log(
+                    $"[PatchService] Applying {resourceType}...");
+
+                try
+                {
+                    if (resourceType == "Sprites")
+                    {
+                        ResourceImportService.SetProgressRange(6, 24);
+                    }
+
+                    if (!ResourceImportService.Import(
+                            resourceType,
+                            data,
+                            resourceDir))
+                    {
+                        LogService.Warning(
+                            $"No native importer for {resourceType}, skipping");
+
+                        failedCount++;
+                    }
+                    else
+                    {
+                        appliedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.Warning(
+                        $"ERROR applying {resourceType}: {ex.Message}");
+
+                    failedCount++;
+                }
+                finally
+                {
+                    ResourceImportService.SetProgressRange();
+                }
+
+                if (resourceType == "Sprites")
+                {
+                    var reorderAssetOrderFile =
+                        Path.Combine(
+                            helpersDir,
+                            "asset_order.txt");
+
+                    if (pfs.FileExists(reorderAssetOrderFile))
+                    {
+                        var reorderOnlyDir =
+                            Path.Combine(
+                                Path.GetTempPath(),
+                                $"g3mtool_reorder_{Guid.NewGuid():N}");
+
+                        Directory.CreateDirectory(reorderOnlyDir);
+
+                        var filteredLines =
+                            FilterAssetOrderSections(
+                                pfs.ReadAllLines(
+                                    reorderAssetOrderFile),
+                                "TexturePageItems",
+                                "EmbeddedTextures");
+
+                        File.WriteAllLines(
+                            Path.Combine(
+                                reorderOnlyDir,
+                                "asset_order.txt"),
+                            filteredLines);
+
+                        LogService.Log(
+                            "[PatchService] Re-ordering assets after sprite import...");
+
+                        ResourceImportService.SetPatchFileSystem(null);
+
+                        try
+                        {
+                            ResourceImportService.ImportAssetOrder(
+                                data,
+                                reorderOnlyDir);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogService.Log(
+                                $"[PatchService] Post-sprite reorder warning: " +
+                                $"{ex.Message}");
+                        }
+
+                        ResourceImportService.SetPatchFileSystem(pfs);
+
+                        try
+                        {
+                            Directory.Delete(
+                                reorderOnlyDir,
+                                true);
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+
+                nonCodeProgress +=
+                    resourceWeights.GetValueOrDefault(
+                        resourceType,
+                        1);
+
+                LogService.Progress(
+                    nonCodeRangeStart +
+                    nonCodeRange *
+                    nonCodeProgress /
+                    Math.Max(totalNonCodeWeight, 1),
+                    100);
+            }
+
+            RepairDanglingCodeReferences(data);
+
+            LogService.Log(
+                "[PatchService] Forcing UndertaleData initialization...");
+
+            _ = data.Strings.Count;
+            _ = data.Sprites.Count;
+            _ = data.TexturePageItems.Count;
+            _ = data.EmbeddedTextures.Count;
+            _ = data.Code.Count;
+            _ = data.Variables.Count;
+            _ = data.Functions.Count;
+
+            foreach (var sprite in data.Sprites)
+            {
+                _ = sprite?.Name;
+                _ = sprite?.Textures?.Count;
+            }
+
+            foreach (var tpi in data.TexturePageItems)
+            {
+                _ = tpi?.TexturePage;
+            }
+
+            foreach (var tex in data.EmbeddedTextures)
+            {
+                _ = tex?.Name;
+            }
+
+            LogService.Progress(100, 100);
+            LogService.ProgressComplete();
+
+            if (appliedCount == 0)
+            {
+                return new PatchApplyResult
+                {
+                    Success = false,
+                    Error = "No resources were applied successfully"
+                };
+            }
+
+            if (failedCount > 0)
+            {
+                LogService.Warning(
+                    $"Patch applied with warnings: " +
+                    $"{appliedCount} succeeded, " +
+                    $"{failedCount} failed");
+            }
+
+            LogService.Log(
+                "[PatchService] Semantic patch applied successfully.");
+
+            return new PatchApplyResult
+            {
+                Success = true
+            };
+        }
+        finally
+        {
+            ResourceImportService.SetPatchFileSystem(null);
+        }
+    }
+    finally
+        {
+            ResourceImportService.SetPatchFileSystem(null);
+        }
+}
+
     private static void RepairDanglingCodeReferences(UndertaleData data)
     {
         var liveCodeEntries = new HashSet<UndertaleCode>();
@@ -1660,7 +2175,6 @@ public partial class PatchService
         }
 
         // Enable lookup caches in Assembler
-        Assembler.SetLookupCaches(data);
         try
         {
 
@@ -1772,7 +2286,6 @@ public partial class PatchService
         } // end try
         finally
         {
-            Assembler.ClearLookupCaches();
         }
 
         if (asmFailed > 5)

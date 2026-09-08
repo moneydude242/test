@@ -332,7 +332,7 @@ public static class ResourceExportService
                 {
                     using var img = tex.TextureData.Image.GetMagickImage();
                     img.Strip();
-                    var pngBytes = GMImage.FromMagickImage(img).ConvertToPng().GetData();
+                    var pngBytes = GMImage.FromMagickImage(img).ConvertToPng().GetRawImageData().ToArray();
                     File.WriteAllBytes(Path.Combine(texDir, texName + ".png"), pngBytes);
                 }
 
@@ -520,7 +520,7 @@ public static class ResourceExportService
                     ["smooth"] = bg.Smooth,
                     ["preload"] = bg.Preload
                 };
-                if (data.IsGameMaker2()) meta["gms2UnknownAlways2"] = bg.GMS2UnknownAlways2;
+                if (data.IsGameMaker2()) meta["gms2UnknownAlways2"] = bg.GMS2TilesetVersion;
 
                 File.WriteAllText(Path.Combine(resDir, name + ".json"),
                     JsonSerializer.Serialize(meta, s_jsonOpts), Encoding.UTF8);
@@ -765,7 +765,7 @@ public static class ResourceExportService
                     ["transparent"] = ts.Transparent,
                     ["smooth"] = ts.Smooth,
                     ["preload"] = ts.Preload,
-                    ["gms2UnknownAlways2"] = ts.GMS2UnknownAlways2,
+                    ["gms2UnknownAlways2"] = ts.GMS2TilesetVersion,
                     ["gms2TileWidth"] = ts.GMS2TileWidth,
                     ["gms2TileHeight"] = ts.GMS2TileHeight,
                     ["gms2OutputBorderX"] = ts.GMS2OutputBorderX,
@@ -773,7 +773,10 @@ public static class ResourceExportService
                     ["gms2TileColumns"] = ts.GMS2TileColumns,
                     ["gms2ItemsPerTileCount"] = ts.GMS2ItemsPerTileCount,
                     ["gms2TileCount"] = ts.GMS2TileCount,
-                    ["gms2ExportedSpriteIndex"] = ts.GMS2ExportedSpriteIndex,
+                    ["gms2ExportedSpriteIndex"] =
+    ts.GMS2ExportedSprite != null
+        ? data.Sprites.IndexOf(ts.GMS2ExportedSprite)
+        : -1,
                     ["gms2FrameLength"] = ts.GMS2FrameLength
                 };
                 if (data.IsVersionAtLeast(2024, 14, 1))

@@ -509,7 +509,7 @@ public static partial class ResourceImportService
             room.InstanceCreationOrderIDs.InstanceIDs.Clear();
             foreach (var idElm in icoElm.EnumerateArray())
                 if (idElm.ValueKind == JsonValueKind.Number)
-                    room.InstanceCreationOrderIDs.InstanceIDs.Add(idElm.GetInt32());
+                    room.InstanceCreationOrderIDs.InstanceIDs.Add(idElm.GetUInt32());
         }
     }
 

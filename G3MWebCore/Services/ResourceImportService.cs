@@ -372,7 +372,7 @@ public static partial class ResourceImportService
                     bg.Smooth = GetJsonValue(root, "smooth", bg.Smooth);
                     bg.Preload = GetJsonValue(root, "preload", bg.Preload);
                     if (data.IsGameMaker2() && root.TryGetProperty("gms2UnknownAlways2", out _))
-                        bg.GMS2UnknownAlways2 = GetJsonValue(root, "gms2UnknownAlways2", bg.GMS2UnknownAlways2);
+                        bg.GMS2TilesetVersion = GetJsonValue(root, "gms2UnknownAlways2", bg.GMS2TilesetVersion);
                 }
 
                 if (isNew) data.Backgrounds.Add(bg!);
